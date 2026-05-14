@@ -28,6 +28,8 @@ import {
   PersonStanding,
   Puzzle,
   TrainTrack,
+  ShieldAlert,
+  BookOpen,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -73,6 +75,18 @@ const menuItems: MenuItem[] = [
     title: "Students",
     url: "/students",
     icon: <PersonStanding />,
+    items: [],
+  },
+  {
+    title: "Admin",
+    url: "/admin",
+    icon: <ShieldAlert />,
+    items: [],
+  },
+  {
+    title: "Mentor",
+    url: "/mentor",
+    icon: <BookOpen />,
     items: [],
   },
 ];
