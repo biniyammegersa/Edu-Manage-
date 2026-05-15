@@ -34,6 +34,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SidebarSetting from "./sidebarFooter";
+import { useGetUserQuery } from "@/features/profileApi/profileApi";
 
 interface MenuItem {
   title: string;
@@ -93,7 +94,16 @@ const menuItems: MenuItem[] = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
-  // console.log("pathname", pathname);
+  const { data: user } = useGetUserQuery();
+  const userRole = user?.data?.role;
+
+  const filteredMenuItems = menuItems.filter((item) => {
+    const isHiddenItem = item.title === "Admin" || item.title === "Mentor" || item.title === "Students";
+    if ((userRole === "student" || userRole === "teacher") && isHiddenItem) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <Sidebar {...props}>
@@ -104,7 +114,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupLabel className="text-muted-foreground">Platform</SidebarGroupLabel>
           <SidebarMenu>
-            {menuItems.map((item) => (
+            {filteredMenuItems.map((item) => (
               <Collapsible
                 key={item.title}
                 asChild

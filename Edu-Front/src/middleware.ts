@@ -21,6 +21,7 @@ const restrictedRoutes = {
   "/proposal": ["student", "admin", "teacher"],
   "/proposal/submit": ["student"],
   "/proposal/submitfeedback": ["teacher"],
+  "/mentor": ["admin", "teacher"],
 };
 
 // Define specific routes that should be strictly restricted
@@ -98,5 +99,6 @@ export const config = {
     "/student/:path*",
     "/setting/:path*",
     "/proposal/:path*",
+    "/mentor/:path*",
   ],
 };

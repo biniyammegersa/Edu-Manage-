@@ -96,13 +96,13 @@ export function MentorDashboard() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Link href={`/project-detail/${project._id}`}>
+                      <Link href={`/project/submitfeedback/${project._id}`}>
                         <Button variant="outline" size="sm">
                           <MessageSquare className="w-4 h-4 mr-2" />
                           Comment
                         </Button>
                       </Link>
-                      <Link href={`/project-detail/${project._id}`}>
+                      <Link href={`/project/submitfeedback/${project._id}`}>
                         <Button size="sm">
                           Review <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
@@ -137,9 +137,9 @@ export function MentorDashboard() {
                       <span className={`px-2 py-1 text-xs font-semibold rounded-full ${proposal.status === 'Approved' ? 'bg-green-100 text-green-800' : proposal.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
                         {proposal.status}
                       </span>
-                      <Link href={`/proposal/${proposal._id}`}>
+                      <Link href={`/proposal/submitfeedback/${proposal._id}`}>
                         <Button size="sm" variant="secondary">
-                          View Details
+                          Review Proposal
                         </Button>
                       </Link>
                     </div>

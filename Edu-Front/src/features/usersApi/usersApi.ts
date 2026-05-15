@@ -21,26 +21,24 @@ export const usersApi = createApi({
     // Get students only
     getStudents: builder.query<profileType[], void>({
       query: () => ({
-        url: USER_ROUTES.PROFILE,
+        url: `${USER_ROUTES.PROFILE}?role=student`,
         method: "GET",
         token: Cookies.get("access_token"),
       }),
       transformResponse: (response: any) => {
-        const users = Array.isArray(response) ? response : response?.data || [];
-        return users.filter((user: profileType) => user.role === "student");
+        return Array.isArray(response) ? response : response?.data || [];
       },
       providesTags: ["User"],
     }),
     // Get teachers only
     getTeachers: builder.query<profileType[], void>({
       query: () => ({
-        url: USER_ROUTES.PROFILE,
+        url: `${USER_ROUTES.PROFILE}?role=teacher`,
         method: "GET",
         token: Cookies.get("access_token"),
       }),
       transformResponse: (response: any) => {
-        const users = Array.isArray(response) ? response : response?.data || [];
-        return users.filter((user: profileType) => user.role === "teacher");
+        return Array.isArray(response) ? response : response?.data || [];
       },
       providesTags: ["User"],
     }),

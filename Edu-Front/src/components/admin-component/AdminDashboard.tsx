@@ -3,13 +3,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, FolderGit2, CheckCircle, Clock } from "lucide-react";
 import { useGetAllProjectsQuery } from "@/features/getProjectsApi/getProjectsApi";
-import { useGetStudentsQuery } from "@/features/usersApi/usersApi";
+import { useGetStudentsQuery, useGetTeachersQuery } from "@/features/usersApi/usersApi";
 import { useGetProposalsQuery } from "@/features/proposalsApi/proposalsApi";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CreateUserDialog } from "./CreateUserDialog";
 import { Project } from "@/type/project";
 
 export function AdminDashboard() {
   const { data: projectsData, isLoading: isLoadingProjects } = useGetAllProjectsQuery();
   const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentsQuery();
+  const { data: teachersData, isLoading: isLoadingTeachers } = useGetTeachersQuery();
   const { data: proposalsResponse, isLoading: isLoadingProposals } = useGetProposalsQuery();
 
   const projects = (projectsData?.projects as Project[]) || [];
@@ -63,9 +67,18 @@ export function AdminDashboard() {
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">Admin Dashboard</h2>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, i) => (
-          <Card key={i}>
+
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="students">Students</TabsTrigger>
+          <TabsTrigger value="mentors">Mentors</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat, i) => (
+              <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 {stat.title}
@@ -121,6 +134,80 @@ export function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+      </TabsContent>
+
+      <TabsContent value="students" className="space-y-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Students Directory</CardTitle>
+            <CreateUserDialog role="student" title="Add Student" />
+          </CardHeader>
+          <CardContent>
+            {isLoadingStudents ? (
+              <div className="text-sm text-muted-foreground">Loading students...</div>
+            ) : studentsData && studentsData.length > 0 ? (
+              <div className="space-y-6">
+                {studentsData.map((student) => (
+                  <div key={student._id} className="flex items-center justify-between space-x-4 border-b pb-4 last:border-0 last:pb-0">
+                    <div className="flex items-center space-x-4">
+                      <Avatar>
+                        <AvatarImage src={student.imageUrl} />
+                        <AvatarFallback>{student.fullName?.charAt(0) || "S"}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium leading-none">{student.fullName}</p>
+                        <p className="text-sm text-muted-foreground">{student.email}</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground hidden md:block">
+                      {student.department || "N/A"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">No students found.</div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="mentors" className="space-y-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Mentors Directory</CardTitle>
+            <CreateUserDialog role="teacher" title="Add Mentor" />
+          </CardHeader>
+          <CardContent>
+            {isLoadingTeachers ? (
+              <div className="text-sm text-muted-foreground">Loading mentors...</div>
+            ) : teachersData && teachersData.length > 0 ? (
+              <div className="space-y-6">
+                {teachersData.map((teacher) => (
+                  <div key={teacher._id} className="flex items-center justify-between space-x-4 border-b pb-4 last:border-0 last:pb-0">
+                    <div className="flex items-center space-x-4">
+                      <Avatar>
+                        <AvatarImage src={teacher.imageUrl} />
+                        <AvatarFallback>{teacher.fullName?.charAt(0) || "T"}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium leading-none">{teacher.fullName}</p>
+                        <p className="text-sm text-muted-foreground">{teacher.email}</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground hidden md:block">
+                      {teacher.department || "N/A"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">No mentors found.</div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -8,6 +8,7 @@ export interface SignupCredentials {
     email: string;
     password: string;
     role: string;
+    department?: string;
 }
 
 interface AuthResponse {
