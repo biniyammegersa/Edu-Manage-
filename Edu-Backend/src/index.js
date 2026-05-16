@@ -17,6 +17,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Root endpoint - provides a simple health/info response
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "API is running",
+    availableEndpoints: ["/api/auth", "/api/projects", "/api/proposals", "/api/users", "/api/feedback"]
+  });
+});
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
@@ -37,7 +46,8 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Something went wrong!" });
 });
 
-const PORT = process.env.PORT || 5000;
+// Force the server to run on port 5000 (ignore PORT env)
+const PORT = 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server is running on port ${PORT}`);
   connectDB();

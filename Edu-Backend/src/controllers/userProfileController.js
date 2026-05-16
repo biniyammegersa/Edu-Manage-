@@ -238,7 +238,14 @@ export const updateUserProfile = async (req, res) => {
 // Get all user profiles
 export const getAllUserProfiles = async (req, res) => {
     try {
-        const users = await User.find()
+        const { role } = req.query;
+        let query = {};
+        
+        if (role) {
+            query.role = role;
+        }
+
+        const users = await User.find(query)
             .select('-password'); // Exclude password from response
 
         res.status(200).json({
