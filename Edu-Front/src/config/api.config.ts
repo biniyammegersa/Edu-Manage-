@@ -47,9 +47,21 @@ export const PROJECT_FEEDBACK_ROUTES = {
   BASE: "/api/project/feedback",
   BY_ID: (id: string) => `/api/project/projects/${id}/feedback`,
 } as const;
+
+// Documentation routes
+export const DOCUMENTATION_ROUTES = {
+  SUBMIT: "/api/documentation/submit",
+  MY_SUBMISSIONS: "/api/documentation/my-submissions",
+  DETAILS: (id: string) => `/api/documentation/details/${id}`,
+  PENDING: "/api/documentation/pending",
+  REVIEW: (id: string) => `/api/documentation/feedback/review/${id}`,
+  FEEDBACK: (id: string) => `/api/documentation/feedback/submission/${id}`
+} as const;
+
 // Combine all routes for easy access
 export const API_ROUTES = {
   AUTH: AUTH_ROUTES,
   PROPOSAL_FEEDBACK: PROPOSAL_FEEDBACK_ROUTES,
   PROPOSALS: PROPOSALS_ROUTES,
+  DOCUMENTATION: DOCUMENTATION_ROUTES,
 } as const;

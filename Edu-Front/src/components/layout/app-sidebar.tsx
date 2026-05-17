@@ -31,6 +31,7 @@ import {
   ShieldAlert,
   BookOpen,
   Users,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -103,6 +104,18 @@ const menuItems: MenuItem[] = [
     icon: <Users />,
     items: [],
   },
+  {
+    title: "Documentation",
+    url: "/documentation",
+    icon: <FileText />,
+    items: [],
+  },
+  {
+    title: "Review Board",
+    url: "/mentor/reviews",
+    icon: <BookOpen />,
+    items: [],
+  },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -128,6 +141,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
 
     if (item.title === "My Group" && userRole !== "student") {
+      return false;
+    }
+
+    if (item.title === "Documentation" && userRole !== "student") {
+      return false;
+    }
+
+    if (item.title === "Review Board" && userRole !== "teacher") {
       return false;
     }
     return true;

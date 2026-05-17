@@ -11,6 +11,7 @@ import { projectSubmitApi } from "@/features/projectSubmitApi/projectSubmitApi";
 import { getProjectsApi } from "@/features/getProjectsApi/getProjectsApi";
 import { commentsApi } from "@/features/commentsApi/commentsApi";
 import { groupApi } from "@/features/groupApi/groupApi";
+import { docApi } from "@/features/docApi/docApi";
 
 export const store = configureStore({
   reducer: {
@@ -25,6 +26,7 @@ export const store = configureStore({
     [getProjectsApi.reducerPath]: getProjectsApi.reducer,
     [commentsApi.reducerPath]: commentsApi.reducer,
     [groupApi.reducerPath]: groupApi.reducer,
+    [docApi.reducerPath]: docApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -39,6 +41,7 @@ export const store = configureStore({
       .concat(getProjectsApi.middleware)
       .concat(commentsApi.middleware)
       .concat(groupApi.middleware)
+      .concat(docApi.middleware)
 });
 
 export type RootState = ReturnType<typeof store.getState>;
