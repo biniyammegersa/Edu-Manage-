@@ -19,7 +19,6 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_FILE_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
 
 const proposalSchema = z.object({
-  advisor: z.string().min(1, "Please select an advisor"),
   title: z.string()
     .min(5, "Title must be at least 5 characters")
     .max(100, "Title must be less than 100 characters"),
@@ -43,7 +42,6 @@ const ProposalSubmission = () => {
   const form = useForm<ProposalFormValues>({
     resolver: zodResolver(proposalSchema),
     defaultValues: {
-      advisor: "",
       title: "",
     },
   });
@@ -61,7 +59,6 @@ const ProposalSubmission = () => {
       
       await submitProposal({
         studentId: currentUser.data._id,
-        teacherId: data.advisor,
         title: data.title,
         proposalFile: data.document,
       }).unwrap();
@@ -93,45 +90,13 @@ const ProposalSubmission = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <section className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between items-baseline mb-5">
-              <div>
-                <h2 className="text-xl font-bold text-gray-700 dark:text-gray-100">
-                  Submit Project Proposal
-                </h2>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  Share your project idea with our team for review
-                </p>
-              </div>
-              <FormField
-                control={form.control}
-                name="advisor"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2">
-                    <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Submit to:
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="w-[180px] bg-white dark:bg-gray-800">
-                          <SelectValue placeholder="Select advisor" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent className="bg-white dark:bg-gray-800">
-                        {teachers.map((teacher: profileType) => (
-                          <SelectItem 
-                            key={teacher._id} 
-                            value={teacher._id}
-                            className="text-gray-700 dark:text-gray-300"
-                          >
-                            {teacher.fullName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="mb-5">
+              <h2 className="text-xl font-bold text-gray-700 dark:text-gray-100">
+                Submit Project Proposal
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                Share your project idea with our team for review
+              </p>
             </div>
 
             <FormField

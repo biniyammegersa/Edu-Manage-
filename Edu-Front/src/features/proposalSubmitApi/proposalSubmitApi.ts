@@ -20,7 +20,7 @@ export interface ProposalSubmission {
 // Define the create proposal submission request type
 export interface CreateProposalSubmissionRequest {
   studentId: string;
-  teacherId: string;
+  teacherId?: string;
   title: string;
   proposalFile: File;
 }
@@ -35,7 +35,9 @@ export const proposalSubmitApi = createApi({
       query: (data) => {
         const formData = new FormData();
         formData.append("studentId", data.studentId);
-        formData.append("teacherId", data.teacherId);
+        if (data.teacherId) {
+          formData.append("teacherId", data.teacherId);
+        }
         formData.append("title", data.title);
         formData.append("proposalFile", data.proposalFile);
 

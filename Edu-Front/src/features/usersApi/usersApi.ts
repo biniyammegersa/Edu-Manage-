@@ -42,6 +42,27 @@ export const usersApi = createApi({
       },
       providesTags: ["User"],
     }),
+    // Get students without a group
+    getStudentsWithoutGroup: builder.query<profileType[], void>({
+      query: () => ({
+        url: `${USER_ROUTES.PROFILE}?role=student&hasGroup=false`,
+        method: "GET",
+        token: Cookies.get("access_token"),
+      }),
+      transformResponse: (response: any) => {
+        return Array.isArray(response) ? response : response?.data || [];
+      },
+      providesTags: ["User"],
+    }),
+    // Delete user
+    deleteUser: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (id) => ({
+        url: `${USER_ROUTES.PROFILE}/${id}`,
+        method: "DELETE",
+        token: Cookies.get("access_token"),
+      }),
+      invalidatesTags: ["User"],
+    }),
   }),
 });
 
@@ -49,4 +70,6 @@ export const {
   useGetUsersQuery,
   useGetStudentsQuery,
   useGetTeachersQuery,
+  useGetStudentsWithoutGroupQuery,
+  useDeleteUserMutation,
 } = usersApi;

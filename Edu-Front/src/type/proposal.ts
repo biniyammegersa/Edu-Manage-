@@ -13,6 +13,7 @@ export type Submission = {
   status: 'Pending' | 'Approved' | 'Rejected' | string;
   attachments: Attachment[];
   feedbackList: Feedback[];
+  group?: string;
   createdAt: string;
   updatedAt: string;
   __v: number;

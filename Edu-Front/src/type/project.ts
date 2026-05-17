@@ -62,6 +62,7 @@ export type Project = {
   reviewedByTeacherId?: string;
   comments: Comment[];
   likes: [string];
+  group?: string;
   views: number;
   createdAt: string;
   updatedAt: string;

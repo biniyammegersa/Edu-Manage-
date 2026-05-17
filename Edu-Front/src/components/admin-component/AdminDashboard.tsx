@@ -1,13 +1,14 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, FolderGit2, CheckCircle, Clock } from "lucide-react";
+import { Users, FolderGit2, CheckCircle, Clock, Trash2 } from "lucide-react";
 import { useGetAllProjectsQuery } from "@/features/getProjectsApi/getProjectsApi";
-import { useGetStudentsQuery, useGetTeachersQuery } from "@/features/usersApi/usersApi";
+import { useGetStudentsQuery, useGetTeachersQuery, useDeleteUserMutation } from "@/features/usersApi/usersApi";
 import { useGetProposalsQuery } from "@/features/proposalsApi/proposalsApi";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateUserDialog } from "./CreateUserDialog";
+import { Button } from "@/components/ui/button";
 import { Project } from "@/type/project";
 
 export function AdminDashboard() {
@@ -15,6 +16,19 @@ export function AdminDashboard() {
   const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentsQuery();
   const { data: teachersData, isLoading: isLoadingTeachers } = useGetTeachersQuery();
   const { data: proposalsResponse, isLoading: isLoadingProposals } = useGetProposalsQuery();
+  
+  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (window.confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
+      try {
+        await deleteUser(userId).unwrap();
+      } catch (error) {
+        console.error("Failed to delete user:", error);
+        alert("Failed to delete user. Please try again.");
+      }
+    }
+  };
 
   const projects = (projectsData?.projects as Project[]) || [];
   const proposals = proposalsResponse?.data || [];
@@ -136,76 +150,126 @@ export function AdminDashboard() {
       </div>
       </TabsContent>
 
-      <TabsContent value="students" className="space-y-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle>Students Directory</CardTitle>
-            <CreateUserDialog role="student" title="Add Student" />
-          </CardHeader>
-          <CardContent>
-            {isLoadingStudents ? (
-              <div className="text-sm text-muted-foreground">Loading students...</div>
-            ) : studentsData && studentsData.length > 0 ? (
-              <div className="space-y-6">
-                {studentsData.map((student) => (
-                  <div key={student._id} className="flex items-center justify-between space-x-4 border-b pb-4 last:border-0 last:pb-0">
-                    <div className="flex items-center space-x-4">
-                      <Avatar>
-                        <AvatarImage src={student.imageUrl} />
-                        <AvatarFallback>{student.fullName?.charAt(0) || "S"}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium leading-none">{student.fullName}</p>
-                        <p className="text-sm text-muted-foreground">{student.email}</p>
-                      </div>
-                    </div>
-                    <div className="text-sm text-muted-foreground hidden md:block">
-                      {student.department || "N/A"}
+      <TabsContent value="students" className="space-y-4 pt-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-2xl font-semibold tracking-tight">Students Directory</h3>
+            <p className="text-sm text-muted-foreground">Manage and view all {totalStudents} registered students</p>
+          </div>
+          <CreateUserDialog role="student" title="Add Student" />
+        </div>
+        
+        {isLoadingStudents ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : studentsData && studentsData.length > 0 ? (
+          <Card className="overflow-hidden">
+            <div className="divide-y divide-border">
+              {studentsData.map((student) => (
+                <div key={student._id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-10 w-10 border shadow-sm">
+                      <AvatarImage src={student.imageUrl} className="object-cover" />
+                      <AvatarFallback className="bg-primary/10 text-primary font-medium">
+                        {student.fullName?.charAt(0) || "S"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">{student.fullName}</p>
+                      <p className="text-sm text-muted-foreground">{student.email}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground">No students found.</div>
-            )}
-          </CardContent>
-        </Card>
+                  <div className="flex items-center space-x-2">
+                    {student.department && (
+                      <div className="hidden md:block">
+                        <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+                          {student.department}
+                        </span>
+                      </div>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => handleDeleteUser(student._id, student.fullName)}
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 text-center border rounded-xl border-dashed bg-muted/10">
+            <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
+            <h3 className="text-lg font-medium text-foreground">No students found</h3>
+            <p className="text-sm text-muted-foreground mt-1">There are no students registered yet.</p>
+          </div>
+        )}
       </TabsContent>
 
-      <TabsContent value="mentors" className="space-y-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle>Mentors Directory</CardTitle>
-            <CreateUserDialog role="teacher" title="Add Mentor" />
-          </CardHeader>
-          <CardContent>
-            {isLoadingTeachers ? (
-              <div className="text-sm text-muted-foreground">Loading mentors...</div>
-            ) : teachersData && teachersData.length > 0 ? (
-              <div className="space-y-6">
-                {teachersData.map((teacher) => (
-                  <div key={teacher._id} className="flex items-center justify-between space-x-4 border-b pb-4 last:border-0 last:pb-0">
-                    <div className="flex items-center space-x-4">
-                      <Avatar>
-                        <AvatarImage src={teacher.imageUrl} />
-                        <AvatarFallback>{teacher.fullName?.charAt(0) || "T"}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium leading-none">{teacher.fullName}</p>
-                        <p className="text-sm text-muted-foreground">{teacher.email}</p>
-                      </div>
-                    </div>
-                    <div className="text-sm text-muted-foreground hidden md:block">
-                      {teacher.department || "N/A"}
+      <TabsContent value="mentors" className="space-y-4 pt-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-2xl font-semibold tracking-tight">Mentors Directory</h3>
+            <p className="text-sm text-muted-foreground">Manage and view all {teachersData?.length || 0} registered mentors</p>
+          </div>
+          <CreateUserDialog role="teacher" title="Add Mentor" />
+        </div>
+        
+        {isLoadingTeachers ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : teachersData && teachersData.length > 0 ? (
+          <Card className="overflow-hidden">
+            <div className="divide-y divide-border">
+              {teachersData.map((teacher) => (
+                <div key={teacher._id} className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-10 w-10 border shadow-sm">
+                      <AvatarImage src={teacher.imageUrl} className="object-cover" />
+                      <AvatarFallback className="bg-emerald-500/10 text-emerald-600 font-medium">
+                        {teacher.fullName?.charAt(0) || "M"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium leading-none">{teacher.fullName}</p>
+                      <p className="text-sm text-muted-foreground">{teacher.email}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground">No mentors found.</div>
-            )}
-          </CardContent>
-        </Card>
+                  <div className="flex items-center space-x-2">
+                    {teacher.department && (
+                      <div className="hidden md:block">
+                        <span className="inline-flex items-center rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
+                          {teacher.department}
+                        </span>
+                      </div>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => handleDeleteUser(teacher._id, teacher.fullName)}
+                      disabled={isDeleting}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-16 text-center border rounded-xl border-dashed bg-muted/10">
+            <Users className="h-12 w-12 text-muted-foreground/30 mb-4" />
+            <h3 className="text-lg font-medium text-foreground">No mentors found</h3>
+            <p className="text-sm text-muted-foreground mt-1">There are no mentors registered yet.</p>
+          </div>
+        )}
       </TabsContent>
       </Tabs>
     </div>

@@ -69,7 +69,6 @@ export const projectSchema = z.object({
     })
   }),
   status: z.boolean(),
-  reviewedByTeacherId: z.string().optional()
 });
 
 export type ProjectFormValues = z.infer<typeof projectSchema>; 

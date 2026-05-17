@@ -9,6 +9,7 @@ export type profileType = {
   phone: string;
   location: string;
   imageUrl: string;
+  group: string;
   socialLinks: Array<{
     _id: string;
     platform: 'github' | 'linkedin' | 'twitter';

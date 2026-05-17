@@ -72,7 +72,6 @@ const ProjectSubmission = () => {
         }
       },
       status: false,
-      reviewedByTeacherId: ""
     },
     mode: "onChange",
   });
@@ -228,9 +227,7 @@ const ProjectSubmission = () => {
         formData.append("documentationFiles", data.codeAndDocumentation.documentation.file);
       }
       
-      if (data.reviewedByTeacherId) {
-        formData.append("reviewedByTeacherId", data.reviewedByTeacherId);
-      }
+      
 
       // Debug log the FormData contents
       console.log('FormData contents:');

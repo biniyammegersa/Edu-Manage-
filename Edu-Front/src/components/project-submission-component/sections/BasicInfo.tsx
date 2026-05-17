@@ -139,38 +139,6 @@ export const BasicInfo = ({ form }: BasicInfoProps) => {
   return (
     <Card className="border-border">
       <CardContent className="p-8">
-        <div className="flex justify-end mb-8">
-          <FormField
-            control={form.control}
-            name="reviewedByTeacherId"
-            render={({ field }) => (
-              <FormItem className="flex items-center gap-3">
-                <FormLabel className="text-sm font-medium text-muted-foreground">
-                  Submit to:
-                </FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-[220px] bg-background">
-                      <SelectValue placeholder="Select advisor" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {teachers.map((teacher: profileType) => (
-                      <SelectItem 
-                        key={teacher._id} 
-                        value={teacher._id}
-                      >
-                        {teacher.fullName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage className="text-xs" />
-              </FormItem>
-            )}
-          />
-        </div>
-
         <div className="border-b border-border pb-8 mb-8">
           <h2 className="text-2xl font-bold text-foreground">Project Title</h2>
           <p className="text-sm text-muted-foreground mt-2">Make it catchy! A good title helps your project stand out.</p>

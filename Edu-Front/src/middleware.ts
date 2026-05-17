@@ -35,8 +35,12 @@ const strictRoutes = {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow access to public routes
+  // Allow access to public routes, but redirect to /home if logged in and accessing /
   if (publicRoutes.includes(pathname)) {
+    const token = request.cookies.get("access_token");
+    if (token && (pathname === "/" || pathname === "/login" || pathname === "/signup")) {
+      return NextResponse.redirect(new URL("/home", request.url));
+    }
     return NextResponse.next();
   }
 

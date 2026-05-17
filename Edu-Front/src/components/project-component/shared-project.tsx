@@ -29,9 +29,12 @@ const SharedProject = () => {
   const filteredProjects = allProjects.filter(project => {
     if (!user?._id) return false;
     
-    // If user is a student, show only their own projects
+    // If user is a student, show their own projects or projects from their group
     if (user.role === 'student') {
-      return project.teamMembers?.some(member => member.id === user._id);
+      return (
+        (project.group && user.group && project.group === user.group) || 
+        project.teamMembers?.some(member => member.id === user._id)
+      );
     }
     
     // If user is a teacher, show projects they're reviewing or teaching

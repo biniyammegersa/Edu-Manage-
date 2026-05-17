@@ -30,6 +30,7 @@ import {
   TrainTrack,
   ShieldAlert,
   BookOpen,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -90,6 +91,18 @@ const menuItems: MenuItem[] = [
     icon: <BookOpen />,
     items: [],
   },
+  {
+    title: "My Group",
+    url: "/group",
+    icon: <Users />,
+    items: [],
+  },
+  {
+    title: "All Groups",
+    url: "/all-groups",
+    icon: <Users />,
+    items: [],
+  },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -98,8 +111,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const userRole = user?.data?.role;
 
   const filteredMenuItems = menuItems.filter((item) => {
-    const isHiddenItem = item.title === "Admin" || item.title === "Mentor" || item.title === "Students";
-    if ((userRole === "student" || userRole === "teacher") && isHiddenItem) {
+    const isAdminOnly = item.title === "Admin" || item.title === "Students" || item.title === "All Groups";
+    
+    if ((userRole === "student" || userRole === "teacher") && isAdminOnly) {
+      return false;
+    }
+    
+    // Hide 'Admin' link when logged in as admin (use 'Home' instead)
+    if (item.title === "Admin" && userRole === "admin") {
+      return false;
+    }
+
+    // Hide 'Mentor' link when logged in as mentor/teacher (use 'Home' instead)
+    if (item.title === "Mentor" && (userRole === "teacher" || userRole === "student")) {
+      return false;
+    }
+
+    if (item.title === "My Group" && userRole !== "student") {
       return false;
     }
     return true;
