@@ -4,6 +4,7 @@ import {
   getAllUserProfiles,
   getUserById,
   uploadProfileImage,
+  deleteUser
 } from "../controllers/userProfileController.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 
@@ -20,5 +21,8 @@ router.put("/update", uploadProfileImage, updateUserProfile);
 
 // Get User profile by ID (for teachers/advisors) - must be last
 router.get("/:id", getUserById);
+
+// Delete User profile by ID
+router.delete("/:id", deleteUser);
 
 export default router;

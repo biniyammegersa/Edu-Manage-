@@ -66,9 +66,10 @@ const projectSchema = new mongoose.Schema({
   views: { type: Number, default: 0 },
   status: { type: Boolean, default: false },
   reviewedByTeacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  group: { type: mongoose.Schema.Types.ObjectId, ref: 'Group' }
 }, {
   timestamps: true
 });
 
-export default mongoose.model('Project', projectSchema); 
+export default mongoose.model('Project', projectSchema);

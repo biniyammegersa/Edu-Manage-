@@ -238,15 +238,22 @@ export const updateUserProfile = async (req, res) => {
 // Get all user profiles
 export const getAllUserProfiles = async (req, res) => {
     try {
-        const { role } = req.query;
+        const { role, hasGroup } = req.query;
         let query = {};
         
         if (role) {
             query.role = role;
         }
 
+        if (hasGroup === 'false') {
+            query.group = null;
+        } else if (hasGroup === 'true') {
+            query.group = { $ne: null };
+        }
+
         const users = await User.find(query)
-            .select('-password'); // Exclude password from response
+            .select('-password') // Exclude password from response
+            .populate('group', 'name'); // Populate group name if it exists
 
         res.status(200).json({
             success: true,
@@ -262,8 +269,46 @@ export const getAllUserProfiles = async (req, res) => {
     }
 };
 
+// Delete user profile
+export const deleteUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        // Delete image from Cloudinary if it exists
+        if (user.imageUrl && !user.imageUrl.includes('default')) {
+            try {
+                const publicId = user.imageUrl.split('/').pop().split('.')[0];
+                await cloudinary.uploader.destroy(`project-hub/profile-images/${publicId}`);
+            } catch (error) {
+                console.error('Error deleting profile image from Cloudinary:', error);
+            }
+        }
+
+        await User.findByIdAndDelete(req.params.id);
+
+        res.status(200).json({
+            success: true,
+            message: 'User deleted successfully'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting user',
+            error: error.message
+        });
+    }
+};
+
 export default {
     updateUserProfile,
     getAllUserProfiles,
-    getUserById
+    getUserById,
+    deleteUser
 };

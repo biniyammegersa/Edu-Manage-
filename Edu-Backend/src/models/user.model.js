@@ -22,6 +22,11 @@ const userSchema = new mongoose.Schema(
       enum: ["community","student", "teacher", "admin"],
     },
     // Student specific fields
+    group: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Group',
+      default: null
+    },
     department: String,
     bio: String,
     imageUrl: {

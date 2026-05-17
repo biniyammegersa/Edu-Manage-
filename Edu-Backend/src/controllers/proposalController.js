@@ -2,13 +2,28 @@ import cloudinary from "../config/cloudinary.js";
 import upload from "../middleware/multer.js";
 import Proposal from "../models/Proposal.js";
 import User from "../models/user.model.js";
+import Group from "../models/Group.js";
 import mongoose from "mongoose";
 
 // Get all proposals for the logged-in student
 export const getProposal = async (req, res) => {
   try {
-    // Find all proposals where student ID matches the logged-in user's ID
-    const proposals = await Proposal.find({ student: req.user._id })
+    let query = { student: req.user._id };
+
+    // If user is a student, also include proposals from their group
+    if (req.user.role === "student") {
+      const student = await User.findById(req.user._id);
+      if (student && student.group) {
+        query = {
+          $or: [
+            { student: req.user._id },
+            { group: student.group }
+          ]
+        };
+      }
+    }
+
+    const proposals = await Proposal.find(query)
       .populate("student", "fullName email department")
       .populate("teacher", "fullName email department")
       .sort({ createdAt: -1 }); // Sort by newest first
@@ -115,9 +130,19 @@ export const getAllProposals = async (req, res) => {
   try {
     let query = {};
 
-    // If user is a student, only show their proposals
+    // If user is a student, show their proposals and their group's proposals
     if (req.user.role === "student") {
-      query.student = req.user._id;
+      const student = await User.findById(req.user._id);
+      if (student && student.group) {
+        query = {
+          $or: [
+            { student: req.user._id },
+            { group: student.group }
+          ]
+        };
+      } else {
+        query.student = req.user._id;
+      }
     }
     // If user is a teacher, show proposals assigned to them
     else if (req.user.role === "teacher") {
@@ -179,7 +204,7 @@ export const uploadProposalFile = (req, res, next) => {
 // Submit a proposal for review
 export const submitProposal = async (req, res) => {
   try {
-    const { title, teacherId } = req.body;
+    const { title } = req.body;
 
     // Validate required fields
     if (!title) {
@@ -189,20 +214,24 @@ export const submitProposal = async (req, res) => {
       });
     }
 
-    if (!teacherId) {
+    // Find the student's group and assigned mentor
+    const student = await User.findById(req.user._id);
+    if (!student.group) {
       return res.status(400).json({
         success: false,
-        message: "Teacher ID is required",
+        message: "You must be in a group to submit a proposal",
       });
     }
 
-    // Validate teacher ID format
-    if (!mongoose.Types.ObjectId.isValid(teacherId)) {
+    const group = await Group.findById(student.group);
+    if (!group || !group.mentor) {
       return res.status(400).json({
         success: false,
-        message: "Invalid teacher ID format",
+        message: "Your group does not have an assigned mentor yet. Please contact the administrator.",
       });
     }
+
+    const teacherId = group.mentor;
 
     // Check if file was uploaded
     if (!req.file) {
@@ -231,7 +260,7 @@ export const submitProposal = async (req, res) => {
     if (!teacher) {
       return res.status(404).json({
         success: false,
-        message: "Teacher not found or is not a teacher",
+        message: "Assigned mentor not found or is not a teacher",
       });
     }
 
@@ -248,6 +277,7 @@ export const submitProposal = async (req, res) => {
       title,
       student: req.user._id,
       teacher: teacherId,
+      group: student.group,
       status: "Pending",
       attachments: [attachment],
     });

@@ -101,6 +101,10 @@ const proposalSchema = new mongoose.Schema({
   feedbackList: {
     type: [feedbackSchema],
     default: []
+  },
+  group: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Group'
   }
 }, {
   timestamps: true
@@ -118,4 +122,4 @@ proposalSchema.set('toJSON', { virtuals: true });
 proposalSchema.set('toObject', { virtuals: true });
 
 
-export default mongoose.model('Proposal', proposalSchema); 
+export default mongoose.model('Proposal', proposalSchema);

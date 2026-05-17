@@ -1,4 +1,6 @@
 import Project from '../models/Project.js';
+import User from '../models/user.model.js';
+import Group from '../models/Group.js';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import mongoose from 'mongoose';
@@ -73,15 +75,22 @@ export const createProject = async (req, res) => {
       appsAndPlatforms, 
       projectDescription, 
       codeAndDocumentation,
-      noToolsUsed,
-      reviewedByTeacherId 
+      noToolsUsed
     } = req.body;
     const files = req.files;
 
-    // Validate reviewedByTeacherId if provided
-    if (reviewedByTeacherId && !mongoose.Types.ObjectId.isValid(reviewedByTeacherId)) {
-      return res.status(400).json({ message: 'Invalid reviewedByTeacherId format' });
+    // Find the student's group and assigned mentor
+    const student = await User.findById(req.user._id);
+    if (!student.group) {
+      return res.status(400).json({ message: 'You must be in a group to create a project' });
     }
+
+    const group = await Group.findById(student.group);
+    if (!group || !group.mentor) {
+      return res.status(400).json({ message: 'Your group does not have an assigned mentor yet. Please contact the administrator.' });
+    }
+
+    const reviewedByTeacherId = group.mentor;
 
     // Arrays to hold all Cloudinary upload promises
     const uploadPromises = [];
@@ -128,12 +137,9 @@ export const createProject = async (req, res) => {
           }).catch(error => {
             console.error('Cloudinary upload error for app logo:', error);
             app.logo = null;
-            console.error('Cloudinary upload error for app logo:', error);
-            app.logo = null;
           });
           uploadPromises.push(uploadPromise);
         }
-        return app;
         return app;
       });
     }
@@ -218,10 +224,10 @@ export const createProject = async (req, res) => {
       
       // Apps and platforms
       appsAndPlatforms: processedApps,
-      projectDescription,
       codeAndDocumentation: finalCodeAndDocumentation,
       noToolsUsed,
-      reviewedByTeacherId: reviewedByTeacherId
+      reviewedByTeacherId: reviewedByTeacherId,
+      group: student.group
     });
 
     const savedProject = await project.save();
@@ -389,4 +395,4 @@ export const deleteComment = async (req, res) => {
     console.error('Error deleting comment:', error);
     res.status(500).json({ message: error.message });
   }
-}; 
+};

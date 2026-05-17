@@ -9,7 +9,11 @@ import proposalRoutes from "./routes/proposalRoutes.js";
 import { connectDB } from "./lib/db.js";
 import proposalFeedbackRoutes from "./routes/proposalFeedbackRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
-import projectFeedbackRoutes from "./routes/projectFeedbackRoutes.js"
+import projectFeedbackRoutes from "./routes/projectFeedbackRoutes.js";
+import groupRoutes from "./routes/groupRoutes.js";
+import chapterSubmissionRoutes from "./routes/chapterSubmissionRoutes.js";
+import chapterFeedbackRoutes from "./routes/chapterFeedbackRoutes.js";
+
 const app = express();
 
 // Middleware
@@ -22,7 +26,7 @@ app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
     message: "API is running",
-    availableEndpoints: ["/api/auth", "/api/projects", "/api/proposals", "/api/users", "/api/feedback"]
+    availableEndpoints: ["/api/auth", "/api/projects", "/api/proposals", "/api/users", "/api/feedback", "/api/documentation"]
   });
 });
 
@@ -32,7 +36,10 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/proposals", proposalRoutes);
 app.use("/api/users", profileRoutes);
 app.use("/api/feedback", proposalFeedbackRoutes);
-app.use("/api/project", projectFeedbackRoutes)
+app.use("/api/project", projectFeedbackRoutes);
+app.use("/api/groups", groupRoutes);
+app.use("/api/documentation", chapterSubmissionRoutes);
+app.use("/api/documentation/feedback", chapterFeedbackRoutes);
 
 // MongoDB connection
 mongoose
