@@ -8,6 +8,34 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "missing_api_key",
 });
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const callWithRetry = async (fn, retries = 3, delay = 1000) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      const status = error.status || (error.response && error.response.status);
+      const isTransient = status === 503 || status === 429 || 
+                          (error.message && (
+                            error.message.includes("503") || 
+                            error.message.includes("429") || 
+                            error.message.includes("high demand") || 
+                            error.message.includes("quota") ||
+                            error.message.includes("rate limit")
+                          ));
+      
+      if (attempt === retries || !isTransient) {
+        throw error;
+      }
+      
+      const backoffDelay = delay * Math.pow(2, attempt - 1);
+      console.warn(`⚠️ AI call failed (Attempt ${attempt}/${retries}): ${error.message || error}. Retrying in ${backoffDelay}ms...`);
+      await sleep(backoffDelay);
+    }
+  }
+};
+
 /**
  * Generates a high-quality mock academic analysis result when API calls fail or are unconfigured.
  * @param {string} title The title of the proposal.
@@ -74,8 +102,7 @@ export const analyzeProposal = async (title, proposalData) => {
   const hasOpenAIKey = !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== "missing_api_key";
 
   if (!hasGeminiKey && !hasOpenAIKey) {
-    console.log("⚠️ No AI API keys configured (GEMINI_API_KEY or OPENAI_API_KEY). Using mock academic analysis evaluator.");
-    return generateMockAnalysis(title, proposalData);
+    throw new Error("No AI API keys configured (GEMINI_API_KEY or OPENAI_API_KEY). Plagiarism analysis cannot be completed.");
   }
 
   const systemPrompt = `You are an "Academic Proposal Plagiarism and Originality Reviewer". 
@@ -131,33 +158,45 @@ ${JSON.stringify(proposalData, null, 2)}
 
   // 1. Try Gemini first if key exists
   if (hasGeminiKey) {
-    try {
-      console.log("🤖 Attempting academic proposal analysis using Gemini...");
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        generationConfig: { responseMimeType: "application/json" }
-      });
+    const geminiModels = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const prompt = `${systemPrompt}\n\n${userPrompt}`;
+    let lastGeminiError = null;
 
-      const prompt = `${systemPrompt}\n\n${userPrompt}`;
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
-      const cleanedText = text.trim().replace(/```json|```/g, '').trim();
-      const parsedData = JSON.parse(cleanedText);
+    for (const modelName of geminiModels) {
+      try {
+        console.log(`🤖 Attempting academic proposal analysis using Gemini model ${modelName}...`);
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: { responseMimeType: "application/json" }
+        });
 
-      // Validate the basic required structure
-      if (parsedData.overallRisk && parsedData.sectionAnalysis) {
-        console.log("✅ Analysis completed successfully using Gemini.");
-        return parsedData;
+        const result = await callWithRetry(async () => {
+          return await model.generateContent(prompt);
+        }, 3, 1000);
+
+        const text = result.response.text();
+        const cleanedText = text.trim().replace(/```json|```/g, '').trim();
+        const parsedData = JSON.parse(cleanedText);
+
+        // Validate the basic required structure
+        if (parsedData.overallRisk && parsedData.sectionAnalysis) {
+          console.log(`✅ Analysis completed successfully using Gemini (${modelName}).`);
+          return parsedData;
+        }
+        throw new Error("Gemini returned a JSON structure missing required fields.");
+      } catch (geminiError) {
+        console.error(`❌ Gemini model ${modelName} failed:`, geminiError.message || geminiError);
+        lastGeminiError = geminiError;
       }
-      throw new Error("Gemini returned a JSON structure missing required fields.");
-    } catch (geminiError) {
-      console.error("❌ Gemini API failed:", geminiError.message || geminiError);
-      // Fall through to OpenAI if available, else fallback to mock
+    }
+
+    if (lastGeminiError) {
+      console.error("❌ All Gemini models failed.");
       if (!hasOpenAIKey) {
-        console.log("⚠️ OpenAI key not configured. Falling back to mock academic analysis.");
-        return generateMockAnalysis(title, proposalData);
+        throw lastGeminiError;
       }
+      console.log("🤖 Falling back to OpenAI API...");
     }
   }
 
@@ -165,15 +204,17 @@ ${JSON.stringify(proposalData, null, 2)}
   if (hasOpenAIKey) {
     try {
       console.log("🤖 Attempting academic proposal analysis using OpenAI...");
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.2,
-      });
+      const response = await callWithRetry(async () => {
+        return await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.2,
+        });
+      }, 3, 1000);
 
       const responseText = response.choices[0].message.content;
       const parsedData = JSON.parse(responseText);
@@ -185,11 +226,158 @@ ${JSON.stringify(proposalData, null, 2)}
       throw new Error("AI returned malformed JSON structure.");
     } catch (openaiError) {
       console.error("❌ OpenAI API failed:", openaiError.message || openaiError);
-      console.log("⚠️ Falling back to mock academic analysis due to API failure.");
-      return generateMockAnalysis(title, proposalData);
+      throw openaiError;
     }
   }
 
   // Edge case safety fallback
-  return generateMockAnalysis(title, proposalData);
+  throw new Error("Academic proposal analysis failed. No AI services completed the request successfully.");
+};
+
+/**
+ * Analyzes a documentation chapter for integrity, technical originality, and content authenticity.
+ * Uses a documentation-specific evaluation method — different from the proposal analyzer.
+ * @param {number} chapterNumber  The chapter number (1–7).
+ * @param {string} chapterType    The chapter type (e.g., "Implementation", "System Design").
+ * @param {string} title          The chapter title.
+ * @param {string} documentText   The raw extracted text content of the submitted chapter.
+ * @returns {Promise<object>}     The structured JSON integrity report.
+ */
+export const analyzeDocumentation = async (chapterNumber, chapterType, title, documentText) => {
+  const hasGeminiKey = !!process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "missing_api_key";
+  const hasOpenAIKey = !!process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== "missing_api_key";
+
+  if (!hasGeminiKey && !hasOpenAIKey) {
+    throw new Error("No AI API keys configured (GEMINI_API_KEY or OPENAI_API_KEY). Documentation integrity analysis cannot be completed.");
+  }
+
+  const systemPrompt = `You are a "Technical Documentation Integrity and Originality Auditor" specialized in reviewing student graduation project chapter submissions.
+
+Your task is to audit the following chapter submission for integrity issues, technical authenticity, and originality. This is NOT a proposal review — this is a technical chapter from a software engineering graduation project.
+
+Chapter context:
+- Chapter Number: ${chapterNumber}
+- Chapter Type: ${chapterType}
+
+Evaluate the following documentation-specific aspects:
+1. **Technical Content Originality**: Is the technical content genuinely original or does it appear copied from textbooks, online tutorials, or other projects?
+2. **Implementation Authenticity**: Do implementation details, code descriptions, and architectural decisions appear genuinely authored by the student?
+3. **AI-Generated Boilerplate Detection**: Are there signs of AI-generated generic explanations that lack project-specific depth (e.g., vague definitions, filler paragraphs)?
+4. **Self-Plagiarism / Inter-Chapter Overlap**: Does the content appear to reuse text verbatim from other chapters without proper context?
+5. **Fabricated Results or Diagrams**: Are test results, performance metrics, or system behaviors described in suspiciously generic or idealized terms?
+6. **Attribution Integrity**: Are third-party tools, libraries, frameworks, APIs, and external code properly acknowledged?
+7. **Technical Depth and Specificity**: Does the writing show genuine understanding of the implemented system, or is it superficially generic?
+
+Return your audit STRICTLY as a JSON object with the following schema:
+{
+  "overallRisk": "Low" | "Medium" | "High",
+  "confidence": number,
+  "originalityScore": number,
+  "chapterIntegrityScore": number,
+  "contentType": "Technical" | "Mixed" | "Generic",
+  "chapterAnalysis": [
+    {
+      "aspect": "string",
+      "risk": "Low" | "Medium" | "High",
+      "issues": ["string"],
+      "feedback": ["string"]
+    }
+  ],
+  "summary": "string",
+  "majorConcerns": ["string"],
+  "recommendations": ["string"]
+}
+
+Field definitions:
+- "originalityScore": 0–100, measures how original the text appears vs copied/paraphrased content.
+- "chapterIntegrityScore": 0–100, measures the technical authenticity and genuine authorship depth of this specific chapter type.
+- "contentType": "Technical" if content is genuinely specific and technical, "Generic" if mostly generic/boilerplate, "Mixed" if a blend.
+- "chapterAnalysis": One entry per evaluation aspect above. Include all 7 aspects.
+
+Do NOT include any markdown formatting, backticks, or text outside the JSON object.
+`;
+
+  const userPrompt = `Audit the following ${chapterType} chapter submission:
+
+Title: ${title}
+
+Document Content:
+${documentText.substring(0, 12000)}
+`;
+
+  const geminiModels = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro"];
+
+  // 1. Try Gemini first
+  if (hasGeminiKey) {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const prompt = `${systemPrompt}\n\n${userPrompt}`;
+    let lastGeminiError = null;
+
+    for (const modelName of geminiModels) {
+      try {
+        console.log(`🤖 Attempting documentation integrity analysis using Gemini model ${modelName}...`);
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: { responseMimeType: "application/json" }
+        });
+
+        const result = await callWithRetry(async () => {
+          return await model.generateContent(prompt);
+        }, 3, 1000);
+
+        const text = result.response.text();
+        const cleanedText = text.trim().replace(/```json|```/g, "").trim();
+        const parsedData = JSON.parse(cleanedText);
+
+        if (parsedData.overallRisk && parsedData.chapterAnalysis && typeof parsedData.chapterIntegrityScore === "number") {
+          console.log(`✅ Documentation integrity analysis completed using Gemini (${modelName}).`);
+          return parsedData;
+        }
+        throw new Error("Gemini returned a JSON structure missing required documentation analysis fields.");
+      } catch (geminiError) {
+        console.error(`❌ Gemini model ${modelName} failed:`, geminiError.message || geminiError);
+        lastGeminiError = geminiError;
+      }
+    }
+
+    if (lastGeminiError) {
+      console.error("❌ All Gemini models failed for documentation integrity analysis.");
+      if (!hasOpenAIKey) {
+        throw lastGeminiError;
+      }
+      console.log("🤖 Falling back to OpenAI API...");
+    }
+  }
+
+  // 2. Try OpenAI as fallback
+  if (hasOpenAIKey) {
+    try {
+      console.log("🤖 Attempting documentation integrity analysis using OpenAI...");
+      const response = await callWithRetry(async () => {
+        return await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.2,
+        });
+      }, 3, 1000);
+
+      const responseText = response.choices[0].message.content;
+      const parsedData = JSON.parse(responseText);
+
+      if (parsedData.overallRisk && parsedData.chapterAnalysis && typeof parsedData.chapterIntegrityScore === "number") {
+        console.log("✅ Documentation integrity analysis completed using OpenAI.");
+        return parsedData;
+      }
+      throw new Error("OpenAI returned a JSON structure missing required documentation analysis fields.");
+    } catch (openaiError) {
+      console.error("❌ OpenAI API failed for documentation integrity analysis:", openaiError.message || openaiError);
+      throw openaiError;
+    }
+  }
+
+  throw new Error("Documentation integrity analysis failed. No AI services completed the request successfully.");
 };
