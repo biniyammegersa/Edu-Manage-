@@ -14,6 +14,7 @@ export type Submission = {
   attachments: Attachment[];
   feedbackList: Feedback[];
   group?: string;
+  plagiarismReport?: PlagiarismReport;
   createdAt: string;
   updatedAt: string;
   __v: number;
@@ -68,4 +69,24 @@ export type FeedbackAttachment = {
   fileName: string;
   size: string;
   downloadLink: string;
+};
+
+export type PlagiarismReport = {
+  _id: string;
+  title: string;
+  overallRisk: 'Low' | 'Medium' | 'High';
+  confidence: number;
+  originalityScore: number;
+  sectionAnalysis: {
+    section: string;
+    risk: 'Low' | 'Medium' | 'High';
+    issues: string[];
+    feedback: string[];
+    _id?: string;
+  }[];
+  majorConcerns: string[];
+  recommendations: string[];
+  summary: string;
+  createdAt: string;
+  updatedAt: string;
 };

@@ -17,7 +17,15 @@ export const proposalsApi = createApi({
       }),
       providesTags: ["proposalApi"],
     }),
+    scanPlagiarism: builder.mutation<{ success: boolean; data: any }, string>({
+      query: (proposalId) => ({
+        url: `${PROPOSALS_ROUTES.BASE}/${proposalId}/scan-plagiarism`,
+        method: "POST",
+        token: Cookies.get("access_token"),
+      }),
+      invalidatesTags: ["proposalApi"],
+    }),
   }),
 });
 
-export const { useGetProposalsQuery } = proposalsApi;
+export const { useGetProposalsQuery, useScanPlagiarismMutation } = proposalsApi;
