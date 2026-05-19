@@ -105,6 +105,10 @@ const proposalSchema = new mongoose.Schema({
   group: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Group'
+  },
+  plagiarismReport: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'PlagiarismReport'
   }
 }, {
   timestamps: true

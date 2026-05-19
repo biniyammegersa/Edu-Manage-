@@ -1,7 +1,10 @@
+import dns from "node:dns";
+dns.setDefaultResultOrder("ipv4first");
+
+import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import cors from "cors";
 import projectRoutes from "./routes/projectRoutes.js";
 import authRoutes from "./routes/auth.route.js";
@@ -13,6 +16,7 @@ import projectFeedbackRoutes from "./routes/projectFeedbackRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";
 import chapterSubmissionRoutes from "./routes/chapterSubmissionRoutes.js";
 import chapterFeedbackRoutes from "./routes/chapterFeedbackRoutes.js";
+import plagiarismRoutes from "./routes/plagiarismRoutes.js";
 
 const app = express();
 
@@ -40,6 +44,7 @@ app.use("/api/project", projectFeedbackRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/documentation", chapterSubmissionRoutes);
 app.use("/api/documentation/feedback", chapterFeedbackRoutes);
+app.use("/api/plagiarism", plagiarismRoutes);
 
 // MongoDB connection
 mongoose

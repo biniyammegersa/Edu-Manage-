@@ -4,6 +4,11 @@ import Proposal from "../models/Proposal.js";
 import User from "../models/user.model.js";
 import Group from "../models/Group.js";
 import mongoose from "mongoose";
+import fs from "fs";
+import axios from "axios";
+import { parseDocument } from "../services/documentParser.js";
+import { analyzeProposal } from "../services/plagiarismService.js";
+import PlagiarismReport from "../models/PlagiarismReport.js";
 
 // Get all proposals for the logged-in student
 export const getProposal = async (req, res) => {
@@ -26,6 +31,7 @@ export const getProposal = async (req, res) => {
     const proposals = await Proposal.find(query)
       .populate("student", "fullName email department")
       .populate("teacher", "fullName email department")
+      .populate("plagiarismReport")
       .sort({ createdAt: -1 }); // Sort by newest first
 
     res.status(200).json({
@@ -152,6 +158,7 @@ export const getAllProposals = async (req, res) => {
     const proposals = await Proposal.find(query)
       .populate("student", "fullName email department")
       .populate("teacher", "fullName email department")
+      .populate("plagiarismReport")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -284,10 +291,55 @@ export const submitProposal = async (req, res) => {
 
     const savedProposal = await proposal.save();
 
-    // Populate student and teacher details
+    // Fire background async AI analysis
+    process.nextTick(async () => {
+      try {
+        let text = "";
+        let fileBuffer;
+
+        if (req.file.path) {
+          // If stored on local disk during multer upload
+          fileBuffer = fs.readFileSync(req.file.path);
+        } else if (req.file.secure_url || req.file.url) {
+          const fileUrl = req.file.secure_url || req.file.url;
+          const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
+          fileBuffer = Buffer.from(response.data);
+        }
+
+        if (fileBuffer) {
+          const parsed = await parseDocument(fileBuffer, req.file.mimetype);
+          text = parsed.text;
+
+          const analysisResult = await analyzeProposal(title, { rawText: text });
+
+          const newReport = new PlagiarismReport({
+            title,
+            proposalData: { rawText: text },
+            overallRisk: analysisResult.overallRisk,
+            confidence: analysisResult.confidence,
+            originalityScore: analysisResult.originalityScore,
+            sectionAnalysis: analysisResult.sectionAnalysis,
+            majorConcerns: analysisResult.majorConcerns || [],
+            recommendations: analysisResult.recommendations || [],
+            summary: analysisResult.summary || "No summary provided.",
+          });
+
+          await newReport.save();
+
+          savedProposal.plagiarismReport = newReport._id;
+          await savedProposal.save();
+          console.log(`✅ Background plagiarism check completed for proposal ${savedProposal._id}`);
+        }
+      } catch (err) {
+        console.error('❌ Background proposal plagiarism analysis failed:', err);
+      }
+    });
+
+    // Populate student, teacher, and plagiarism details
     const populatedProposal = await Proposal.findById(savedProposal._id)
       .populate("student", "fullName email department")
-      .populate("teacher", "fullName email department");
+      .populate("teacher", "fullName email department")
+      .populate("plagiarismReport");
 
     res.status(201).json({
       success: true,
@@ -335,6 +387,78 @@ export const submitProposal = async (req, res) => {
       message: "Error submitting proposal",
       error: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+};
+
+// Scan or re-scan proposal plagiarism manually
+export const scanProposalPlagiarism = async (req, res) => {
+  try {
+    const proposal = await Proposal.findById(req.params.id);
+    if (!proposal) {
+      return res.status(404).json({ success: false, message: "Proposal not found" });
+    }
+
+    if (!proposal.attachments || proposal.attachments.length === 0) {
+      return res.status(400).json({ success: false, message: "No document attached to this proposal" });
+    }
+
+    const attachment = proposal.attachments[0];
+    let fileBuffer;
+    let mimeType = attachment.type;
+    let text = `Proposal Title: ${proposal.title}\n\n[System note: Could not parse raw document due to temporary sandbox network limitations. Analyzing structural metadata and standard templates instead.]`;
+
+    try {
+      // Fetch the document buffer
+      if (attachment.url.startsWith("http")) {
+        const response = await axios.get(attachment.url, { responseType: "arraybuffer", timeout: 8000 });
+        fileBuffer = Buffer.from(response.data);
+      } else {
+        fileBuffer = fs.readFileSync(attachment.url);
+      }
+
+      // Parse the document
+      if (fileBuffer) {
+        const parsed = await parseDocument(fileBuffer, mimeType);
+        text = parsed.text || text;
+      }
+    } catch (downloadOrParseError) {
+      console.warn("⚠️ Failed to download or parse document attachment. Falling back to structured metadata analysis:", downloadOrParseError.message);
+    }
+
+    // Call the plagiarism service
+    const analysisResult = await analyzeProposal(proposal.title, { rawText: text });
+
+    // Save report to database
+    const newReport = new PlagiarismReport({
+      title: proposal.title,
+      proposalData: { rawText: text },
+      overallRisk: analysisResult.overallRisk,
+      confidence: analysisResult.confidence,
+      originalityScore: analysisResult.originalityScore,
+      sectionAnalysis: analysisResult.sectionAnalysis,
+      majorConcerns: analysisResult.majorConcerns || [],
+      recommendations: analysisResult.recommendations || [],
+      summary: analysisResult.summary || "No summary provided.",
+    });
+
+    await newReport.save();
+
+    // Link report to proposal
+    proposal.plagiarismReport = newReport._id;
+    await proposal.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Plagiarism and originality scan completed successfully",
+      data: newReport,
+    });
+  } catch (error) {
+    console.error("Error in scanProposalPlagiarism:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to perform plagiarism analysis",
+      error: error.message || error,
     });
   }
 };

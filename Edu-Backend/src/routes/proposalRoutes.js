@@ -6,6 +6,7 @@ import {
   getAllProposals,
   submitProposal,
   uploadProposalFile,
+  scanProposalPlagiarism,
 } from "../controllers/proposalController.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import checkRole from "../middleware/roleCheck.js";
@@ -38,6 +39,13 @@ router.post(
 
 // Delete proposal
 router.delete("/:id", deleteProposal);
+
+// Scan proposal plagiarism
+router.post(
+  "/:id/scan-plagiarism",
+  checkRole(["teacher"]),
+  scanProposalPlagiarism
+);
 
 // Mount feedback routes
 router.use("/:proposalId/feedback", feedbackRoutes);
