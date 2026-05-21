@@ -35,8 +35,17 @@ export function StudentDashboard() {
     if (resolved.toLowerCase() === "approved") return "Approved";
     if (resolved.toLowerCase() === "rejected") return "Rejected";
     if (resolved.toLowerCase() === "pending") return "Pending";
+    if (resolved.toLowerCase() === "needs revision" || resolved.toLowerCase() === "needs_revision") return "Needs Revision";
     return resolved;
   };
+
+  // Sort and check latest proposal status
+  const sortedProposals = [...myProposals].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+  const latestProposal = sortedProposals[0];
+  const latestStatus = latestProposal ? getProposalStatus(latestProposal) : null;
+  const canSubmit = !latestProposal || latestStatus === "Rejected" || latestStatus === "Needs Revision";
 
   const pendingProposals = myProposals.filter((p) => getProposalStatus(p) === "Pending").length;
   const approvedProposals = myProposals.filter((p) => getProposalStatus(p) === "Approved").length;
@@ -77,13 +86,15 @@ export function StudentDashboard() {
             Welcome back, {currentUser?.fullName}! Track your progress here.
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Link href="/proposal/submit">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> Submit New Proposal
-            </Button>
-          </Link>
-        </div>
+        {canSubmit && (
+          <div className="flex items-center space-x-2">
+            <Link href="/proposal/submit">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" /> Submit New Proposal
+              </Button>
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

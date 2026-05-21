@@ -36,6 +36,26 @@ export default function ProposalsPage() {
   const isStudent = profileData?.data?.role === "student";
   const isTeacher = profileData?.data?.role === "teacher";
 
+  // Filter proposals for the current student
+  const myProposals = Allproposals?.data?.filter((p) => p.student?._id === profileData?.data?._id) || [];
+
+  const getProposalStatus = (p: any) => {
+    const last = p.feedbackList?.length - 1;
+    const resolved = p.feedbackList?.[last]?.status || p.status || "Pending";
+    if (resolved.toLowerCase() === "approved") return "Approved";
+    if (resolved.toLowerCase() === "rejected") return "Rejected";
+    if (resolved.toLowerCase() === "pending") return "Pending";
+    if (resolved.toLowerCase() === "needs revision" || resolved.toLowerCase() === "needs_revision") return "Needs Revision";
+    return resolved;
+  };
+
+  const sortedProposals = [...myProposals].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+  const latestProposal = sortedProposals[0];
+  const latestStatus = latestProposal ? getProposalStatus(latestProposal) : null;
+  const canSubmit = !latestProposal || latestStatus === "Rejected" || latestStatus === "Needs Revision";
+
   if (isUserLoading || isProposalsLoading) {
     return (
       <div className="container mx-auto py-6 space-y-6">
@@ -102,7 +122,7 @@ export default function ProposalsPage() {
             />
             <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           </div>
-          {isStudent &&
+          {isStudent && canSubmit &&
           (<Link href="/proposal/submit">
             <Button variant="outline">New Proposal</Button>
           </Link>)

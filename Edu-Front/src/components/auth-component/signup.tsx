@@ -20,8 +20,6 @@ import {
 import { useSignupMutation } from "@/features/auth/authApi";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { SerializedError } from "@reduxjs/toolkit";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import Login from "./signin";
 
 const signupSchema = z.object({
   fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -74,10 +72,10 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="space-y-4 bg-background text-foreground">
-      <div className="text-center">
-        <h2 className="text-lg font-semibold text-foreground">Create Account</h2>
-        <div className="mt-2 h-1 w-12 bg-primary mx-auto"></div>
+    <div className="space-y-4">
+      <div className="text-center mb-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Create Account</h2>
+        <div className="mt-2 h-1 w-12 bg-[#1a9e7a] mx-auto rounded-full"></div>
       </div>
 
       <Form {...form}>
@@ -87,7 +85,7 @@ export default function SignupPage() {
             name="fullName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-foreground">Full Name</FormLabel>
+                <FormLabel className="text-foreground font-medium">Full Name</FormLabel>
                 <FormControl>
                   <Input {...field} disabled={isLoading} className="bg-background border-input" />
                 </FormControl>
@@ -101,7 +99,7 @@ export default function SignupPage() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-foreground">Email</FormLabel>
+                <FormLabel className="text-foreground font-medium">Email</FormLabel>
                 <FormControl>
                   <Input {...field} type="email" disabled={isLoading} className="bg-background border-input" />
                 </FormControl>
@@ -115,7 +113,7 @@ export default function SignupPage() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-foreground">Password</FormLabel>
+                <FormLabel className="text-foreground font-medium">Password</FormLabel>
                 <FormControl>
                   <Input {...field} type="password" disabled={isLoading} className="bg-background border-input" />
                 </FormControl>
@@ -132,7 +130,7 @@ export default function SignupPage() {
 
           <Button
             type="submit"
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+            className="w-full bg-[#1a9e7a] hover:bg-[#158a6a] text-white font-semibold transition-colors duration-200"
             disabled={isLoading}
           >
             {isLoading ? "Creating Account..." : "Create Account"}
@@ -140,16 +138,12 @@ export default function SignupPage() {
 
           <div className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Popover>
-                <PopoverTrigger asChild>
-                  <Button className=" bg-transparent text-foreground border-none hover:bg-transparent h-0 w-0 cursor-pointer">
-                    Login
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-80">
-                  <Login />
-                </PopoverContent>
-              </Popover>
+            <Link
+              href="/login"
+              className="text-[#1a9e7a] hover:text-[#158a6a] font-semibold transition-colors duration-200"
+            >
+              Log In
+            </Link>
           </div>
         </form>
       </Form>

@@ -86,7 +86,7 @@ export default function Home() {
           {/* CTA Buttons */}
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
             <Link
-              href="/home"
+              href="/login"
               className="inline-flex items-center gap-2 bg-[#1a9e7a] hover:bg-[#158a6a] text-white font-semibold px-7 py-3.5 rounded-full transition-colors duration-200 shadow-sm"
             >
               Get Started Free

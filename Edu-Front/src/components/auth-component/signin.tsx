@@ -69,9 +69,9 @@ const Login = () => {
 
   return (
     <div className="space-y-4">
-      <div className="text-center">
-        <h2 className="text-lg font-semibold">Login to Project-HUB</h2>
-        <div className="mt-2 h-1 w-12 bg-blue-600 mx-auto"></div>
+      <div className="text-center mb-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Login to Project-HUB</h2>
+        <div className="mt-2 h-1 w-12 bg-[#1a9e7a] mx-auto rounded-full"></div>
       </div>
 
       <Form {...form}>
@@ -81,9 +81,9 @@ const Login = () => {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-foreground font-medium">Email</FormLabel>
                 <FormControl>
-                  <Input {...field} type="email" disabled={isLoading} />
+                  <Input {...field} type="email" disabled={isLoading} className="bg-background border-input" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -95,9 +95,9 @@ const Login = () => {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel className="text-foreground font-medium">Password</FormLabel>
                 <FormControl>
-                  <Input {...field} type="password" disabled={isLoading} />
+                  <Input {...field} type="password" disabled={isLoading} className="bg-background border-input" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -105,7 +105,7 @@ const Login = () => {
           />
 
           {error && (
-            <div className="text-sm text-red-600 text-center">
+            <div className="text-sm text-destructive text-center">
               {getErrorMessage(error)}
             </div>
           )}
@@ -113,7 +113,7 @@ const Login = () => {
           <div className="text-sm">
             <Link
               href="/forgot-password"
-              className="text-blue-600 hover:text-blue-700"
+              className="text-[#1a9e7a] hover:text-[#158a6a] font-medium transition-colors duration-200"
             >
               Forgot Password?
             </Link>
@@ -121,17 +121,17 @@ const Login = () => {
 
           <Button
             type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="w-full bg-[#1a9e7a] hover:bg-[#158a6a] text-white font-semibold transition-colors duration-200"
             disabled={isLoading}
           >
             {isLoading ? "Logging in..." : "Log In"}
           </Button>
 
-          <div className="text-center text-sm">
+          <div className="text-center text-sm text-muted-foreground">
             Not registered?{" "}
             <Link
-              href="/api/auth/signup"
-              className="text-blue-600 hover:text-blue-700"
+              href="/signup"
+              className="text-[#1a9e7a] hover:text-[#158a6a] font-semibold transition-colors duration-200"
             >
               Create an Account
             </Link>
