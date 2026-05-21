@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useGetUserQuery } from "@/features/profileApi/profileApi";
 import { useLogoutMutation } from "@/features/auth/authApi";
+import { useAppDispatch, resetStore } from "@/lib/store";
 import Cookies from 'js-cookie';
 
 const Header = () => {
@@ -24,14 +25,16 @@ const Header = () => {
   const [logout] = useLogoutMutation();
   const { data: user, isLoading } = useGetUserQuery();
 
-  const handleLogout = async () => {
-    try {
-      await logout().unwrap();
-      Cookies.remove('access_token');
-      router.push('/');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+  const dispatch = useAppDispatch();
+
+  const handleLogout = () => {
+    // Always clear the local session regardless of API result
+    Cookies.remove('access_token');
+    // Clear all cached RTK Query data
+    dispatch(resetStore());
+    // Attempt backend logout, but don't block the user from logging out
+    logout().catch((error) => console.error('Backend logout failed:', error));
+    router.push('/');
   };
   return (
     <header className="flex justify-between h-16 shrink-0 items-center gap-2 border-b px-4 bg-background">

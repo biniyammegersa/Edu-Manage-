@@ -17,11 +17,17 @@ const restrictedRoutes = {
   "/project/submit": ["student"],
   "/project/submitfeedback": ["teacher"],
   "/student": ["admin", "teacher"],
+  "/students": ["admin", "teacher"],
+  "/settings": ["student", "admin", "teacher"],
   "/setting": ["student", "admin", "teacher"],
   "/proposal": ["student", "admin", "teacher"],
   "/proposal/submit": ["student"],
   "/proposal/submitfeedback": ["teacher"],
   "/mentor": ["admin", "teacher"],
+  "/documentation": ["student", "teacher"],
+  "/group": ["student", "admin", "teacher"],
+  "/all-groups": ["admin", "teacher"],
+  "/admin": ["admin"],
 };
 
 // Define specific routes that should be strictly restricted
@@ -101,8 +107,14 @@ export const config = {
     "/profile/:path*",
     "/project/:path*",
     "/student/:path*",
+    "/students/:path*",
     "/setting/:path*",
+    "/settings/:path*",
     "/proposal/:path*",
     "/mentor/:path*",
+    "/documentation/:path*",
+    "/group/:path*",
+    "/all-groups/:path*",
+    "/admin/:path*",
   ],
 };

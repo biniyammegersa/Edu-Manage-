@@ -30,13 +30,24 @@ export function AdminDashboard() {
     }
   };
 
+  // Helper to dynamically resolve status (backwards compatible)
+  const getProposalStatus = (p: any) => {
+    const last = p.feedbackList?.length - 1;
+    const resolved = p.feedbackList?.[last]?.status || p.status || "Pending";
+    // Standardize to Capitalized
+    if (resolved.toLowerCase() === "approved") return "Approved";
+    if (resolved.toLowerCase() === "rejected") return "Rejected";
+    if (resolved.toLowerCase() === "pending") return "Pending";
+    return resolved;
+  };
+
   const projects = (projectsData?.projects as Project[]) || [];
   const proposals = proposalsResponse?.data || [];
   
   const totalStudents = studentsData?.length || 0;
   const totalProjects = projects.length;
-  const approvedProposals = proposals.filter((p) => p.status === "Approved").length;
-  const pendingReviews = proposals.filter((p) => p.status === "Pending").length;
+  const approvedProposals = proposals.filter((p) => getProposalStatus(p) === "Approved").length;
+  const pendingReviews = proposals.filter((p) => getProposalStatus(p) === "Pending").length;
 
   const stats = [
     {
@@ -71,7 +82,7 @@ export function AdminDashboard() {
     .slice(0, 5)
     .map((p) => ({
       id: p._id,
-      action: `Proposal ${p.status}`,
+      action: `Proposal ${getProposalStatus(p)}`,
       user: p.student?.fullName || "Student",
       time: new Date(p.createdAt).toLocaleDateString(),
     }));

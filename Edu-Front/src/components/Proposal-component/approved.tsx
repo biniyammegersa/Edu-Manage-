@@ -8,9 +8,11 @@ import { Submission } from '@/type/proposal';
 const ApprovedProposals = () => {
   const { data: proposals } = useGetProposalsQuery();
   
-  const approvedProposals = proposals?.data?.filter(
-    (proposal: Submission) => proposal.feedbackList[proposal.feedbackList.length - 1]?.status === "Approved"
-  ) || [];
+  const approvedProposals = proposals?.data?.filter((proposal: Submission) => {
+    const last = proposal.feedbackList?.length - 1;
+    const status = proposal.status || proposal.feedbackList?.[last]?.status || "Pending";
+    return status.toLowerCase() === "approved";
+  }) || [];
 
   return (
     <div className="container mx-auto py-6 space-y-6">

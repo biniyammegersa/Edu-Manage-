@@ -17,8 +17,8 @@ export function ProposalCard({
   proposals: Submission;
   layout: "grid" | "list";
 }) {
-  const last = proposals?.feedbackList.length - 1
-  const status = proposals?.feedbackList[last]?.status.toLowerCase() || "pending";
+  const last = proposals?.feedbackList?.length - 1;
+  const status = (proposals?.feedbackList?.[last]?.status || proposals?.status || "Pending").toLowerCase();
   const date = new Date(proposals?.createdAt).toLocaleDateString();
   const time = new Date(proposals?.createdAt).toLocaleTimeString();
   if (layout === "grid") {
@@ -37,6 +37,9 @@ export function ProposalCard({
           {status === "rejected" && (
             <Badge className="bg-red-500">Rejected</Badge>
           )}
+          {status === "needs revision" && (
+            <Badge className="bg-orange-500">Needs Revision</Badge>
+          )}
         </CardHeader>
         <CardContent className="flex-grow">
           <div className="space-y-2">
@@ -53,7 +56,7 @@ export function ProposalCard({
           <div className="text-sm text-muted-foreground">
             {date} {time}
           </div>
-          {(status === "approved" || status === "rejected") && (
+          {(status === "approved" || status === "rejected" || status === "needs revision") && (
             <Link href={`/proposal/viewfeedback/${proposals._id}`}>
               <Button variant="link" className="p-0 h-auto">
                 View Feedback
@@ -80,6 +83,9 @@ export function ProposalCard({
         {status === "rejected" && (
           <Badge className="bg-red-500">Rejected</Badge>
         )}
+        {status === "needs revision" && (
+          <Badge className="bg-orange-500">Needs Revision</Badge>
+        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-1">
@@ -96,7 +102,7 @@ export function ProposalCard({
         <div className="text-sm text-muted-foreground">
           <span className="font-semibold">Submitted:</span> {date} {time}
         </div>
-        {(status === "approved" || status === "rejected") && (
+        {(status === "approved" || status === "rejected" || status === "needs revision") && (
           <Link href={`/proposal/viewfeedback/${proposals._id}`}>
             <Button variant="link" className="p-0 h-auto">
               View Feedback

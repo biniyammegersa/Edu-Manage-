@@ -1,12 +1,12 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import { baseQuery } from "@/lib/baseQuery";
 import Cookies from "js-cookie";
-import { DOCUMENTATION_ROUTES } from "@/config/api.config";
+import { DOCUMENTATION_ROUTES, PLAGIARISM_ROUTES } from "@/config/api.config";
 
 export const docApi = createApi({
   reducerPath: "docApi",
   baseQuery,
-  tagTypes: ["ChapterSubmission", "SubmissionDetails", "PendingReviews", "Feedback"],
+  tagTypes: ["ChapterSubmission", "SubmissionDetails", "PendingReviews", "Feedback", "PlagiarismReport"],
   endpoints: (builder) => ({
     // Student: Fetch submissions checklist matrix
     getMySubmissions: builder.query<any, void>({
@@ -75,6 +75,16 @@ export const docApi = createApi({
       }),
       providesTags: (result, error, id) => [{ type: "Feedback", id }],
     }),
+
+    // Advisor: Run AI plagiarism analysis on a chapter
+    analyzeChapterPlagiarism: builder.mutation<any, { title: string; proposalData: Record<string, string> }>({
+      query: (body) => ({
+        url: PLAGIARISM_ROUTES.CHECK,
+        method: "POST",
+        body,
+        token: Cookies.get("access_token"),
+      }),
+    }),
   }),
 });
 
@@ -85,4 +95,5 @@ export const {
   useGetPendingReviewsQuery,
   useSubmitReviewMutation,
   useGetSubmissionFeedbackQuery,
+  useAnalyzeChapterPlagiarismMutation,
 } = docApi;

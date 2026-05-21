@@ -58,6 +58,11 @@ export const DOCUMENTATION_ROUTES = {
   FEEDBACK: (id: string) => `/api/documentation/feedback/submission/${id}`
 } as const;
 
+// Plagiarism routes
+export const PLAGIARISM_ROUTES = {
+  CHECK: "/api/plagiarism/check",
+} as const;
+
 // Combine all routes for easy access
 export const API_ROUTES = {
   AUTH: AUTH_ROUTES,

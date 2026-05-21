@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import PlagiarismPanel from "@/components/mentor-component/PlagiarismPanel";
 import { 
   useGetPendingReviewsQuery, 
   useSubmitReviewMutation,
@@ -192,6 +193,7 @@ export default function AdvisorReviewsPage() {
               </p>
             </div>
           ) : (
+            <>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               
               {/* LEFT HALF: Document Reader / Overview */}
@@ -200,7 +202,8 @@ export default function AdvisorReviewsPage() {
                   <FileText className="w-4.5 h-4.5 text-primary" /> Document Reader
                 </h3>
 
-                <div className="flex-grow overflow-y-auto space-y-6 pr-2">
+                {/* Document content — scrolls independently */}
+                <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-2">
                   <div className="bg-muted/10 border p-4 rounded-xl space-y-1">
                     <div className="text-[10px] text-primary font-semibold uppercase">Chapter Title</div>
                     <div className="text-sm font-bold text-foreground leading-snug">{activeSub.title}</div>
@@ -238,15 +241,14 @@ export default function AdvisorReviewsPage() {
                   )}
 
                   {/* Document Raw Extract Text Viewer */}
-                  <div className="bg-muted/10 border rounded-xl p-4 flex-grow min-h-[300px]">
+                  <div className="bg-muted/10 border rounded-xl p-4">
                     <div className="text-[10px] text-muted-foreground font-bold uppercase border-b pb-2 mb-3">Extracted Content Preview</div>
-                    <div className="text-xs text-foreground/90 font-mono leading-relaxed whitespace-pre-wrap max-h-[350px] overflow-y-auto">
+                    <div className="text-xs text-foreground/90 font-mono leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto">
                       {latestVersion?.templateValidation?.warnings?.[0]?.includes("mock text") 
                         ? "CHAPTER ONE: INTRODUCTION\nBackground: Senior year thesis management remains largely unautomated...\nProblem Statement: Managing proposal revisions causes coordination overhead...\nAim and Objectives: To develop a production-ready submission engine...\nMethodology: Using standard Agile development cycles..."
                         : latestVersion?.fileUrl ? `[Content Extracted Successfully]\nThis is a mock DOCX preview containing full section checks for Chapter ${activeSub.chapterNumber}.` : "No text content preview available."}
                     </div>
                   </div>
-
                 </div>
               </div>
 
@@ -401,6 +403,28 @@ export default function AdvisorReviewsPage() {
               </div>
 
             </div>
+
+            {/* ── AI Plagiarism & Originality Analyzer (standalone, independently scrollable) ── */}
+            <div className="bg-card border rounded-2xl shadow-sm overflow-hidden">
+              {/* Sticky header row */}
+              <div className="flex items-center justify-between px-6 py-4 border-b bg-card sticky top-0 z-10">
+                <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  AI Plagiarism &amp; Originality Analyzer
+                </h3>
+                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Chapter {activeSub.chapterNumber} · {activeSub.chapterType || "Chapter"}</span>
+              </div>
+              {/* Scrollable results body */}
+              <div className="overflow-y-auto max-h-[420px] px-6 py-4">
+                <PlagiarismPanel
+                  title={activeSub.title}
+                  chapterType={activeSub.chapterType || "Chapter"}
+                  chapterNumber={activeSub.chapterNumber}
+                  latestVersion={latestVersion}
+                />
+              </div>
+            </div>
+            </>
           )}
         </div>
 

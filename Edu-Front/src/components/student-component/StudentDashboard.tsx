@@ -27,8 +27,19 @@ export function StudentDashboard() {
     p.likes?.includes(currentUser?._id || "")
   );
 
-  const pendingProposals = myProposals.filter((p) => p.status === "Pending").length;
-  const approvedProposals = myProposals.filter((p) => p.status === "Approved").length;
+  // Helper to dynamically resolve status (backwards compatible)
+  const getProposalStatus = (p: any) => {
+    const last = p.feedbackList?.length - 1;
+    const resolved = p.feedbackList?.[last]?.status || p.status || "Pending";
+    // Standardize to Capitalized
+    if (resolved.toLowerCase() === "approved") return "Approved";
+    if (resolved.toLowerCase() === "rejected") return "Rejected";
+    if (resolved.toLowerCase() === "pending") return "Pending";
+    return resolved;
+  };
+
+  const pendingProposals = myProposals.filter((p) => getProposalStatus(p) === "Pending").length;
+  const approvedProposals = myProposals.filter((p) => getProposalStatus(p) === "Approved").length;
 
   const stats = [
     {
@@ -116,11 +127,11 @@ export function StudentDashboard() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${proposal.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                          proposal.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                      <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full ${getProposalStatus(proposal) === 'Approved' ? 'bg-green-100 text-green-800' :
+                          getProposalStatus(proposal) === 'Rejected' ? 'bg-red-100 text-red-800' :
                             'bg-yellow-100 text-yellow-800'
                         }`}>
-                        {proposal.status}
+                        {getProposalStatus(proposal)}
                       </span>
                     </div>
                   </div>

@@ -8,20 +8,23 @@ import {
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/navigation";
 import { useLogoutMutation } from "@/features/auth/authApi";
+import { useAppDispatch, resetStore } from "@/lib/store";
 import Cookies from "js-cookie";
 
 const SidebarSetting = () => {
   const router = useRouter();
   const [logout] = useLogoutMutation();
 
-  const handleLogout = async () => {
-    try {
-      await logout().unwrap();
-      Cookies.remove("access_token");
-      router.push("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+  const dispatch = useAppDispatch();
+
+  const handleLogout = () => {
+    // Always clear the local session regardless of API result
+    Cookies.remove("access_token");
+    // Clear all cached RTK Query data
+    dispatch(resetStore());
+    // Attempt backend logout, but don't block the user from logging out
+    logout().catch((error) => console.error("Backend logout failed:", error));
+    router.push("/");
   };
 
   return (

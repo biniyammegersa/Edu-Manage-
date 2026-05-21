@@ -21,6 +21,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProposalsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("");
   const { data: userData, isLoading: isUserLoading } = useGetUserQuery(undefined, {
     refetchOnMountOrArgChange: true
   });
@@ -68,12 +71,17 @@ export default function ProposalsPage() {
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
           <div className="relative">
-            <Input placeholder="Search proposals..." className="w-full pl-10" />
+            <Input 
+              placeholder="Search proposals..." 
+              className="w-full pl-10" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           </div>
         </div>
         <div className="flex gap-2">
-          <Select defaultValue="all">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
@@ -86,7 +94,12 @@ export default function ProposalsPage() {
           </Select>
 
           <div className="relative">
-            <Input type="date" className="w-[180px] pl-10" />
+            <Input 
+              type="date" 
+              className="w-[180px] pl-10" 
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+            />
             <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           </div>
           {isStudent &&
@@ -123,21 +136,47 @@ export default function ProposalsPage() {
             : "grid gap-4"
         }
       >
-        {Allproposals?.data?.map((proposal) => {
-          if (isStudent) {
-            return (
-              <ProposalCard
-                key={proposal._id}
-                proposals={proposal}
-                layout={viewMode}
-              />
-            );
-          }
-          if (isTeacher) {
-            return <DocumentationCard key={proposal._id} proposals={proposal} layout={viewMode}/>;
-          }
-          return null;
-        })}
+        {Allproposals?.data
+          ?.filter((proposal) => {
+            // Status Filter
+            if (statusFilter !== "all" && proposal.status?.toLowerCase() !== statusFilter.toLowerCase()) {
+              return false;
+            }
+            // Search Query Filter
+            if (searchQuery.trim()) {
+              const query = searchQuery.toLowerCase();
+              const titleMatch = proposal.title?.toLowerCase().includes(query);
+              const studentMatch = proposal.student?.fullName?.toLowerCase().includes(query);
+              const deptMatch = proposal.student?.department?.toLowerCase().includes(query);
+              if (!titleMatch && !studentMatch && !deptMatch) {
+                return false;
+              }
+            }
+            // Date Filter
+            if (dateFilter) {
+              const proposalDate = new Date(proposal.createdAt).toDateString();
+              const filterDate = new Date(dateFilter).toDateString();
+              if (proposalDate !== filterDate) {
+                return false;
+              }
+            }
+            return true;
+          })
+          ?.map((proposal) => {
+            if (isStudent) {
+              return (
+                <ProposalCard
+                  key={proposal._id}
+                  proposals={proposal}
+                  layout={viewMode}
+                />
+              );
+            }
+            if (isTeacher) {
+              return <DocumentationCard key={proposal._id} proposals={proposal} layout={viewMode}/>;
+            }
+            return null;
+          })}
       </div>
     </div>
   );

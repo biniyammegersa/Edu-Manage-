@@ -1,4 +1,4 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { createApi } from '@reduxjs/toolkit/query/react';
 import Cookies from 'js-cookie';
 import { baseQuery } from '@/lib/baseQuery';
 import { AUTH_ROUTES } from '@/config/api.config';
@@ -57,15 +57,6 @@ export const authApi = createApi({
                 url: AUTH_ROUTES.LOGOUT,
                 method: 'POST',
             }),
-            async onQueryStarted(_, { queryFulfilled }) {
-                try {
-                    await queryFulfilled;
-                    // Remove access token from cookie
-                    Cookies.remove('access_token');
-                } catch (error) {
-                    console.error('Logout failed:', error);
-                }
-            },
         }),
     }),
 });
