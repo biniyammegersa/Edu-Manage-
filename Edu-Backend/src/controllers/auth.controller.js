@@ -161,7 +161,9 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
+    // Clear both cookie names for safety (jwt was the old name)
     res.cookie("jwt", "", { maxAge: 0 });
+    res.cookie("access_token", "", { maxAge: 0, httpOnly: true, sameSite: "strict" });
     res.status(200).json({
       success: true,
       message: "Logged Out Successfully",

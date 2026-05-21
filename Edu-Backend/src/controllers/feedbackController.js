@@ -57,6 +57,8 @@ export const addFeedback = async (req, res) => {
 
     // Add feedback to the proposal's feedback list
     proposal.feedbackList.push(newFeedback);
+    // Sync overall proposal status with latest feedback status
+    proposal.status = status || 'Pending';
     await proposal.save();
 
     // Populate teacher details
@@ -149,7 +151,13 @@ export const updateFeedback = async (req, res) => {
     if (projectTitle) proposal.feedbackList[feedbackIndex].projectTitle = projectTitle;
     if (sections) proposal.feedbackList[feedbackIndex].sections = sections;
     if (attachments) proposal.feedbackList[feedbackIndex].attachments = attachments;
-    if (status) proposal.feedbackList[feedbackIndex].status = status;
+    if (status) {
+      proposal.feedbackList[feedbackIndex].status = status;
+      // Sync overall proposal status if we updated the latest feedback entry
+      if (Number(feedbackIndex) === proposal.feedbackList.length - 1) {
+        proposal.status = status;
+      }
+    }
 
     await proposal.save();
 
@@ -175,7 +183,7 @@ export const deleteFeedback = async (req, res) => {
   try {
     const { proposalId, feedbackIndex } = req.params;
 
-    const proposal = await Proposal.findOne({ id: proposalId });
+    const proposal = await Proposal.findOne({ _id: proposalId });
     if (!proposal) {
       return res.status(404).json({
         success: false,
@@ -201,6 +209,14 @@ export const deleteFeedback = async (req, res) => {
 
     // Remove feedback from array
     proposal.feedbackList.splice(feedbackIndex, 1);
+    
+    // Sync overall proposal status with the new latest feedback, or reset to 'Pending'
+    if (proposal.feedbackList.length > 0) {
+      proposal.status = proposal.feedbackList[proposal.feedbackList.length - 1].status;
+    } else {
+      proposal.status = 'Pending';
+    }
+    
     await proposal.save();
 
     res.status(200).json({
