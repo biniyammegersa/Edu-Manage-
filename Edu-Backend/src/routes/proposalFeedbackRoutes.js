@@ -10,9 +10,9 @@ import {
 
 const router = express.Router();
 
-// All routes are protected and require teacher role
+// All routes are protected and require teacher or admin role
 router.use(protectRoute);
-router.use(checkRole('teacher'));
+router.use(checkRole(['teacher', 'admin']));
 
 // Add feedback to a proposal
 router.post('/proposal/:proposalId', addFeedback);

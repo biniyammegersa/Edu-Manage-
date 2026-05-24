@@ -15,13 +15,15 @@ export const getProposal = async (req, res) => {
   try {
     let query = { student: req.user._id };
 
-    // If user is a student, also include proposals from their group
+    // If user is a student, also include proposals from their group members
     if (req.user.role === "student") {
       const student = await User.findById(req.user._id);
       if (student && student.group) {
+        const groupObj = await Group.findById(student.group);
+        const memberIds = groupObj ? groupObj.members : [req.user._id];
         query = {
           $or: [
-            { student: req.user._id },
+            { student: { $in: memberIds } },
             { group: student.group }
           ]
         };
@@ -140,9 +142,11 @@ export const getAllProposals = async (req, res) => {
     if (req.user.role === "student") {
       const student = await User.findById(req.user._id);
       if (student && student.group) {
+        const groupObj = await Group.findById(student.group);
+        const memberIds = groupObj ? groupObj.members : [req.user._id];
         query = {
           $or: [
-            { student: req.user._id },
+            { student: { $in: memberIds } },
             { group: student.group }
           ]
         };
@@ -235,6 +239,24 @@ export const submitProposal = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Your group does not have an assigned mentor yet. Please contact the administrator.",
+      });
+    }
+
+    const memberIds = group.members || [req.user._id];
+
+    // Check if the group or any group member already has an active proposal (Pending or Approved)
+    const existingGroupProposal = await Proposal.findOne({
+      $or: [
+        { group: student.group },
+        { student: { $in: memberIds } }
+      ],
+      status: { $in: ["Pending", "Approved"] }
+    });
+
+    if (existingGroupProposal) {
+      return res.status(400).json({
+        success: false,
+        message: `Your group already has an active proposal that is currently ${existingGroupProposal.status}. Only one proposal can be submitted per group.`,
       });
     }
 
