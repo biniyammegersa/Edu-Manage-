@@ -32,6 +32,7 @@ import {
   BookOpen,
   Users,
   FileText,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -96,7 +97,10 @@ const menuItems: MenuItem[] = [
     title: "My Group",
     url: "/group",
     icon: <Users />,
-    items: [],
+    items: [
+      { title: "Members", url: "/group" },
+      { title: "Group Chat", url: "/group?tab=chat" },
+    ],
   },
   {
     title: "All Groups",

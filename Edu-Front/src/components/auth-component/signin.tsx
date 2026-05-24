@@ -70,7 +70,7 @@ const Login = () => {
   return (
     <div className="space-y-4">
       <div className="text-center mb-6">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Login to Project-HUB</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white">Login to Edu-Manage</h2>
         <div className="mt-2 h-1 w-12 bg-[#1a9e7a] mx-auto rounded-full"></div>
       </div>
 

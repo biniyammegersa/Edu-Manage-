@@ -12,6 +12,7 @@ import {
 import { ProposalCard } from "./ProposalCard";
 import { useState, useEffect } from "react";
 import { useGetProposalsQuery } from "@/features/proposalsApi/proposalsApi";
+import { useGetMyGroupQuery } from "@/features/groupApi/groupApi";
 import Link from "next/link";
 import { SubmissionResponse } from "@/type/proposal";
 import { useGetUserQuery } from "@/features/profileApi/profileApi";
@@ -30,14 +31,24 @@ export default function ProposalsPage() {
   const { data: proposals, isLoading: isProposalsLoading } = useGetProposalsQuery(undefined, {
     refetchOnMountOrArgChange: true
   });
+  const { data: groupResponse, isLoading: isGroupLoading } = useGetMyGroupQuery(undefined, {
+    refetchOnMountOrArgChange: true
+  });
 
   const profileData = userData as UserType;
+  const group = groupResponse?.data;
   const Allproposals = proposals as SubmissionResponse;
   const isStudent = profileData?.data?.role === "student";
   const isTeacher = profileData?.data?.role === "teacher";
+  const isAdmin = profileData?.data?.role === "admin";
 
-  // Filter proposals for the current student
-  const myProposals = Allproposals?.data?.filter((p) => p.student?._id === profileData?.data?._id) || [];
+  // Filter proposals for the current student's group
+  const myProposals = Allproposals?.data?.filter((p) => {
+    const isSameGroup = p.group && profileData?.data?.group && p.group === profileData?.data?.group;
+    const memberIds = group?.members?.map((m: any) => typeof m === 'object' ? m._id : m) || [];
+    const isGroupMember = p.student?._id && memberIds.includes(p.student._id);
+    return isSameGroup || isGroupMember;
+  }) || [];
 
   const getProposalStatus = (p: any) => {
     const last = p.feedbackList?.length - 1;
@@ -56,7 +67,7 @@ export default function ProposalsPage() {
   const latestStatus = latestProposal ? getProposalStatus(latestProposal) : null;
   const canSubmit = !latestProposal || latestStatus === "Rejected" || latestStatus === "Needs Revision";
 
-  if (isUserLoading || isProposalsLoading) {
+  if (isUserLoading || isProposalsLoading || isGroupLoading) {
     return (
       <div className="container mx-auto py-6 space-y-6">
         <div className="space-y-1">
@@ -192,7 +203,7 @@ export default function ProposalsPage() {
                 />
               );
             }
-            if (isTeacher) {
+            if (isTeacher || isAdmin) {
               return <DocumentationCard key={proposal._id} proposals={proposal} layout={viewMode}/>;
             }
             return null;

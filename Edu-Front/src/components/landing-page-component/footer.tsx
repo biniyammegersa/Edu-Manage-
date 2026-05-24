@@ -124,7 +124,7 @@ export default function Footer() {
         </div>
         <div className="mt-12 pt-8 border-t dark:border-gray-800 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            © 2025 Project-HUB. All rights reserved.
+            © 2025 Edu-Manage. All rights reserved.
           </p>
           <div className="flex gap-6 mt-4 md:mt-0">
             <Link

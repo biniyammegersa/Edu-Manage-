@@ -40,7 +40,7 @@ const SidebarProfile = () => {
               <path d="M12 13.5V8" />
             </svg>
 
-            <span className="text-xl font-bold text-blue-500">Project-HUB</span>
+            <span className="text-xl font-bold text-blue-500">Edu-Manage</span>
           </Link>
         </div>
       </div>

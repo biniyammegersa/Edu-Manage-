@@ -78,7 +78,7 @@ export default function Navbar() {
                 <path d="m12 8 4.74-2.85" />
                 <path d="M12 13.5V8" />
               </svg>
-              Project-HUB
+              Edu-Manage
             </Link>
             <nav className="hidden md:flex items-center gap-6">
               <Link

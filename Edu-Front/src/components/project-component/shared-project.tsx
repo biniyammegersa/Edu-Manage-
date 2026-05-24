@@ -51,12 +51,18 @@ const SharedProject = () => {
       <div className="container mx-auto py-6 space-y-6">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight">
-            {user?.role === 'student' ? 'My Projects' : 'Assigned Projects'}
+            {user?.role === 'student' 
+              ? 'My Projects' 
+              : user?.role === 'admin'
+                ? 'All Platform Projects'
+                : 'Assigned Projects'}
           </h1>
           <p className="text-muted-foreground">
             {user?.role === 'student' 
               ? 'Projects you are working on'
-              : 'Projects assigned to you for review or teaching'
+              : user?.role === 'admin'
+                ? 'Overview of all projects across the platform'
+                : 'Projects assigned to you for review or teaching'
             }
           </p>
         </div>
@@ -144,7 +150,8 @@ const SharedProject = () => {
                 imageUrl={project.coverImage || "/placeholder-project.jpg"}
                 date={project.createdAt}
                 viewMode={viewMode}
-                role={(user?.role || 'student') as 'student' | 'teacher'}
+                role={(user?.role || 'student') as 'student' | 'teacher' | 'admin'}
+                status={project.status}
               />
             ))}
           </div>

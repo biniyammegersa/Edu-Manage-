@@ -46,7 +46,12 @@ const ProposalSubmission = () => {
   const group = groupResponse?.data;
 
   const proposals = proposalsResponse?.data || [];
-  const myProposals = proposals.filter((p) => p.student?._id === currentUser?.data?._id);
+  const myProposals = proposals.filter((p) => {
+    const isSameGroup = p.group && currentUser?.data?.group && p.group === currentUser?.data?.group;
+    const memberIds = group?.members?.map((m: any) => typeof m === 'object' ? m._id : m) || [];
+    const isGroupMember = p.student?._id && memberIds.includes(p.student._id);
+    return isSameGroup || isGroupMember;
+  });
 
   const getProposalStatus = (p: any) => {
     const last = p.feedbackList?.length - 1;

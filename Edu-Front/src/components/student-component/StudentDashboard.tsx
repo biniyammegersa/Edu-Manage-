@@ -5,6 +5,7 @@ import { FolderGit2, CheckCircle, Clock, FileText, Plus, MessageSquare } from "l
 import { useGetAllProjectsQuery } from "@/features/getProjectsApi/getProjectsApi";
 import { useGetUserQuery } from "@/features/profileApi/profileApi";
 import { useGetProposalsQuery } from "@/features/proposalsApi/proposalsApi";
+import { useGetMyGroupQuery } from "@/features/groupApi/groupApi";
 import { Project } from "@/type/project";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -13,13 +14,20 @@ export function StudentDashboard() {
   const { data: userResponse, isLoading: isLoadingUser } = useGetUserQuery();
   const { data: projectsData, isLoading: isLoadingProjects } = useGetAllProjectsQuery();
   const { data: proposalsResponse, isLoading: isLoadingProposals } = useGetProposalsQuery();
+  const { data: groupResponse, isLoading: isLoadingGroup } = useGetMyGroupQuery();
 
   const currentUser = userResponse?.data;
+  const group = groupResponse?.data;
   const projects = (projectsData?.projects as Project[]) || [];
   const proposals = proposalsResponse?.data || [];
 
-  // Filter proposals for the current student
-  const myProposals = proposals.filter((p) => p.student?._id === currentUser?._id);
+  // Filter proposals for the current student's group
+  const myProposals = proposals.filter((p) => {
+    const isSameGroup = p.group && currentUser?.group && p.group === currentUser?.group;
+    const memberIds = group?.members?.map((m: any) => typeof m === 'object' ? m._id : m) || [];
+    const isGroupMember = p.student?._id && memberIds.includes(p.student._id);
+    return isSameGroup || isGroupMember;
+  });
 
   // Find projects where the student is a team member
   const myProjects = projects.filter((p) =>

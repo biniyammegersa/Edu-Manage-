@@ -11,7 +11,8 @@ interface SharedProjectCardProps {
   imageUrl: string;
   date: string;
   viewMode: "grid" | "list";
-  role: "student" | "teacher";
+  role: "student" | "teacher" | "admin";
+  status?: boolean;
 }
 
 const SharedProjectCard: React.FC<SharedProjectCardProps> = ({
@@ -22,17 +23,36 @@ const SharedProjectCard: React.FC<SharedProjectCardProps> = ({
   date,
   viewMode,
   role,
+  status,
 }) => {
   const { data: feedback } = useGetProjectFeedbackQuery(id);
   const feedbacks = feedback as ProjectFeedbackList | undefined;
-  const feedbackData = feedbacks?.feedback[feedbacks?.feedback.length - 1]
+  const feedbackData = feedbacks?.feedback[feedbacks?.feedback.length - 1];
+
+  const getStatusDisplay = () => {
+    const rawStatus = feedbackData?.status || (status ? "approved" : "pending");
+    switch (rawStatus.toLowerCase()) {
+      case "approved":
+        return { label: "Approved", className: "bg-green-500 text-white" };
+      case "rejected":
+        return { label: "Rejected", className: "bg-red-500 text-white" };
+      case "need review":
+      case "need_review":
+      case "needs revision":
+        return { label: "Need Review", className: "bg-amber-500 text-white" };
+      default:
+        return { label: "Pending", className: "bg-blue-500 text-white" };
+    }
+  };
+
+  const statusBadge = getStatusDisplay();
 
   const getFeedbackLink = () => {
     if (role === "student") {
       return feedbackData && feedbackData.status !== "pending"
         ? `/project/viewfeedback/${id}`
         : `/home/project-detail/${id}`;
-    } else if (role === "teacher") {
+    } else if (role === "teacher" || role === "admin") {
       return feedbackData && feedbackData.status !== "pending"
         ? `/project/viewfeedback/${id}`
         : `/project/submitfeedback/${id}`;
@@ -45,7 +65,7 @@ const SharedProjectCard: React.FC<SharedProjectCardProps> = ({
       return feedbackData && feedbackData.status !== "pending"
         ? "View Feedback"
         : "View Project";
-    } else if (role === "teacher") {
+    } else if (role === "teacher" || role === "admin") {
       return feedbackData && feedbackData.status !== "pending"
         ? "View Feedback"
         : "Give Feedback";
@@ -58,6 +78,9 @@ const SharedProjectCard: React.FC<SharedProjectCardProps> = ({
       <div className="flex border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden bg-white dark:bg-gray-800">
         <div className="relative w-48 h-48 flex-shrink-0">
           <Image src={imageUrl} alt={title} fill className="object-cover" />
+          <span className={`absolute top-2 right-2 px-2.5 py-0.5 text-[10px] font-semibold rounded-full shadow-md ${statusBadge.className}`}>
+            {statusBadge.label}
+          </span>
         </div>
 
         <div className="flex-1 p-6 flex flex-col">
@@ -91,6 +114,9 @@ const SharedProjectCard: React.FC<SharedProjectCardProps> = ({
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden bg-white dark:bg-gray-800">
       <div className="relative h-48 w-full">
         <Image src={imageUrl} alt={title} fill className="object-cover" />
+        <span className={`absolute top-2 right-2 px-2.5 py-0.5 text-[10px] font-semibold rounded-full shadow-md ${statusBadge.className}`}>
+          {statusBadge.label}
+        </span>
       </div>
 
       <div className="p-6">
