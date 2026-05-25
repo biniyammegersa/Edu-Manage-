@@ -55,19 +55,24 @@ export default function StudentDocumentationPage() {
     return map;
   }, [submissions]);
 
-  // Check sequence locking
+  // Check sequence locking — each chapter requires the previous chapter to be Approved
   const isChapterUnlocked = (chapterNum: number) => {
     if (chapterNum === 1) return true;
-    
-    // Chapter 2 and 3 unlock when Chapter 1 is submitted or approved
-    if (chapterNum === 2 || chapterNum === 3) {
-      return !!subMap[1];
+    const prereqSub = subMap[chapterNum - 1];
+    return prereqSub?.currentStatus === "Approved";
+  };
+
+  const getUnlockMessage = (chapterNum: number) => {
+    if (chapterNum <= 1) return "";
+    const prereq = chapterNum - 1;
+    const prereqSub = subMap[prereq];
+    if (!prereqSub) {
+      return `Submit and get Chapter ${prereq} approved before you can upload Chapter ${chapterNum}.`;
     }
-    
-    // Chapters >= 4 require chapter N-1 to be Approved (Chapter 4 requires Chapter 3)
-    const prereqChapter = chapterNum === 4 ? 3 : chapterNum - 1;
-    const prereqSub = subMap[prereqChapter];
-    return prereqSub && prereqSub.currentStatus === "Approved";
+    if (prereqSub.currentStatus !== "Approved") {
+      return `Chapter ${prereq} must be approved (currently: ${prereqSub.currentStatus.replace(/_/g, " ")}) before you can submit Chapter ${chapterNum}.`;
+    }
+    return "";
   };
 
   // Get status color tokens
@@ -216,7 +221,7 @@ export default function StudentDocumentationPage() {
                   disabled={!unlocked}
                   className={`w-full text-left p-4 rounded-xl transition-all duration-300 border flex items-center gap-4 ${
                     isSelected 
-                      ? "bg-primary/5 border-primary/40 shadow-[0_0_15px_rgba(99,102,241,0.05)]" 
+                      ? "bg-primary/5 border-primary/40 shadow-[0_0_15px_rgba(74,222,128,0.08)]" 
                       : "bg-muted/10 border-border hover:bg-muted/30 hover:border-border/80"
                   } ${!unlocked ? "opacity-40 cursor-not-allowed" : ""}`}
                 >
@@ -270,7 +275,9 @@ export default function StudentDocumentationPage() {
                   <Lock className="w-12 h-12 text-muted-foreground mb-4 animate-bounce" />
                   <h3 className="font-bold text-foreground text-lg">Prerequisites Locked</h3>
                   <p className="text-muted-foreground max-w-sm mt-2 text-sm leading-relaxed">
-                    You must obtain supervisor approval on prior chapters in the sequence workflow before you can proceed to upload this draft chapter.
+                    {selectedChapter
+                      ? getUnlockMessage(selectedChapter)
+                      : "You must obtain supervisor approval on the previous chapter before you can proceed."}
                   </p>
                 </div>
               ) : (

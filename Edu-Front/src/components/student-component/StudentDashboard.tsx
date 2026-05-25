@@ -6,6 +6,7 @@ import { useGetAllProjectsQuery } from "@/features/getProjectsApi/getProjectsApi
 import { useGetUserQuery } from "@/features/profileApi/profileApi";
 import { useGetProposalsQuery } from "@/features/proposalsApi/proposalsApi";
 import { useGetMyGroupQuery } from "@/features/groupApi/groupApi";
+import { useGetDocumentationReadinessQuery } from "@/features/docApi/docApi";
 import { Project } from "@/type/project";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ export function StudentDashboard() {
   const { data: projectsData, isLoading: isLoadingProjects } = useGetAllProjectsQuery();
   const { data: proposalsResponse, isLoading: isLoadingProposals } = useGetProposalsQuery();
   const { data: groupResponse, isLoading: isLoadingGroup } = useGetMyGroupQuery();
+  const { data: docReadiness } = useGetDocumentationReadinessQuery();
 
   const currentUser = userResponse?.data;
   const group = groupResponse?.data;
@@ -57,6 +59,10 @@ export function StudentDashboard() {
 
   const pendingProposals = myProposals.filter((p) => getProposalStatus(p) === "Pending").length;
   const approvedProposals = myProposals.filter((p) => getProposalStatus(p) === "Approved").length;
+  const allDocsApproved = docReadiness?.eligible === true;
+  const hasSubmittedProject = docReadiness?.hasSubmittedProject === true;
+  const canCreateProject =
+    approvedProposals > 0 && allDocsApproved && !hasSubmittedProject;
 
   const stats = [
     {
@@ -174,15 +180,46 @@ export function StudentDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {approvedProposals > 0 && (
+              {canCreateProject && (
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                   <h4 className="text-sm font-semibold text-green-800 dark:text-green-300">Project Ready!</h4>
                   <p className="text-xs text-green-700 dark:text-green-400 mt-1">
-                    You have an approved proposal. You can now start working on your project and submit it.
+                    Your proposal and all 7 documentation chapters are approved. You can submit your project now.
                   </p>
                   <Link href="/project/submit">
                     <Button size="sm" className="mt-3 bg-green-600 hover:bg-green-700 text-white border-none">
-                      Create Project
+                      Submit Project
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
+              {approvedProposals > 0 && !allDocsApproved && (
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                    Complete Documentation First
+                  </h4>
+                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                    Project submission opens after all 7 chapters are mentor-approved (
+                    {docReadiness?.approvedCount ?? 0}/7 done).
+                  </p>
+                  <Link href="/documentation">
+                    <Button size="sm" variant="outline" className="mt-3">
+                      Continue Documentation
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
+              {hasSubmittedProject && (
+                <div className="p-4 border rounded-lg">
+                  <h4 className="text-sm font-semibold">Project Submitted</h4>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Your group already has a project on the platform.
+                  </p>
+                  <Link href="/project">
+                    <Button variant="outline" size="sm" className="mt-3">
+                      View My Projects
                     </Button>
                   </Link>
                 </div>

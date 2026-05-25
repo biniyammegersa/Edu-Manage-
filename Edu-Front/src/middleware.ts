@@ -5,12 +5,14 @@ const publicRoutes = [
   "/",
   "/login",
   "/signup",
+  "/projects",
   "/api/auth/login",
   "/api/auth/signup",
 ];
 
 // Define routes that are restricted to specific roles
 const restrictedRoutes = {
+  "/community": ["community"],
   "/home": ["admin", "teacher", "student"],
   "/profile": ["student", "admin", "teacher"],
   "/project": ["student", "admin", "teacher"],
@@ -18,7 +20,7 @@ const restrictedRoutes = {
   "/project/submitfeedback": ["teacher"],
   "/student": ["admin", "teacher"],
   "/students": ["admin", "teacher"],
-  "/settings": ["student", "admin", "teacher"],
+  "/settings": ["student", "admin", "teacher", "community"],
   "/setting": ["student", "admin", "teacher"],
   "/proposal": ["student", "admin", "teacher"],
   "/proposal/submit": ["student"],
@@ -41,10 +43,29 @@ const strictRoutes = {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Project details require login (guests can browse list at /projects only)
+  if (pathname.startsWith("/project-detail")) {
+    const token = request.cookies.get("access_token");
+    if (!token) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("from", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    return NextResponse.next();
+  }
+
   // Allow access to public routes, but redirect to /home if logged in and accessing /
   if (publicRoutes.includes(pathname)) {
     const token = request.cookies.get("access_token");
     if (token && (pathname === "/" || pathname === "/login" || pathname === "/signup")) {
+      try {
+        const tokenData = JSON.parse(atob(token.value.split(".")[1]));
+        if (tokenData.role === "community") {
+          return NextResponse.redirect(new URL("/community", request.url));
+        }
+      } catch {
+        // fall through to default redirect
+      }
       return NextResponse.redirect(new URL("/home", request.url));
     }
     return NextResponse.next();
@@ -73,7 +94,8 @@ export function middleware(request: NextRequest) {
         console.log(
           `Access denied: User with role ${userRole} attempted to access ${pathname}`
         );
-        return NextResponse.redirect(new URL("/", request.url));
+        const fallback = userRole === "community" ? "/community" : "/";
+        return NextResponse.redirect(new URL(fallback, request.url));
       }
       return NextResponse.next();
     }
@@ -89,7 +111,8 @@ export function middleware(request: NextRequest) {
         console.log(
           `Access denied: User with role ${userRole} attempted to access ${pathname}`
         );
-        return NextResponse.redirect(new URL("/", request.url));
+        const fallback = userRole === "community" ? "/community" : "/";
+        return NextResponse.redirect(new URL(fallback, request.url));
       }
     }
 
@@ -103,6 +126,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/project-detail/:path*",
     "/home/:path*",
     "/profile/:path*",
     "/project/:path*",
@@ -116,5 +140,6 @@ export const config = {
     "/group/:path*",
     "/all-groups/:path*",
     "/admin/:path*",
+    "/community/:path*",
   ],
 };

@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useGetProjectFeedbackQuery } from "@/features/projectFeedbackApi/ProjectFeedbackApi";
-import { ProjectFeedback, ProjectFeedbackList } from "@/type/project-feedback";
+import { usePublishProjectMutation } from "@/features/getProjectsApi/getProjectsApi";
+import { ProjectFeedbackList } from "@/type/project-feedback";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Globe } from "lucide-react";
 
 interface SharedProjectCardProps {
   id: string;
@@ -12,7 +16,7 @@ interface SharedProjectCardProps {
   date: string;
   viewMode: "grid" | "list";
   role: "student" | "teacher" | "admin";
-  status?: boolean;
+  projectStatus?: string;
 }
 
 const SharedProjectCard: React.FC<SharedProjectCardProps> = ({
@@ -23,15 +27,23 @@ const SharedProjectCard: React.FC<SharedProjectCardProps> = ({
   date,
   viewMode,
   role,
-  status,
+  projectStatus,
 }) => {
   const { data: feedback } = useGetProjectFeedbackQuery(id);
+  const [publishProject, { isLoading: isPublishing }] = usePublishProjectMutation();
+  const [publishedLocally, setPublishedLocally] = useState(false);
+
   const feedbacks = feedback as ProjectFeedbackList | undefined;
   const feedbackData = feedbacks?.feedback[feedbacks?.feedback.length - 1];
 
+  const resolvedStatus = (
+    publishedLocally ? "published" : projectStatus || feedbackData?.status || "pending"
+  ).toLowerCase();
+
   const getStatusDisplay = () => {
-    const rawStatus = feedbackData?.status || (status ? "approved" : "pending");
-    switch (rawStatus.toLowerCase()) {
+    switch (resolvedStatus) {
+      case "published":
+        return { label: "Published", className: "bg-emerald-600 text-white" };
       case "approved":
         return { label: "Approved", className: "bg-green-500 text-white" };
       case "rejected":
@@ -41,11 +53,27 @@ const SharedProjectCard: React.FC<SharedProjectCardProps> = ({
       case "needs revision":
         return { label: "Need Review", className: "bg-amber-500 text-white" };
       default:
-        return { label: "Pending", className: "bg-blue-500 text-white" };
+        return { label: "Pending", className: "bg-emerald-400 text-white" };
     }
   };
 
   const statusBadge = getStatusDisplay();
+  const canPublish =
+    role === "admin" && resolvedStatus === "approved" && !publishedLocally;
+
+  const handlePublish = async () => {
+    try {
+      await publishProject(id).unwrap();
+      setPublishedLocally(true);
+      toast.success("Project published", {
+        description: "The community can now view this project.",
+      });
+    } catch {
+      toast.error("Failed to publish project", {
+        description: "Please try again.",
+      });
+    }
+  };
 
   const getFeedbackLink = () => {
     if (role === "student") {
@@ -73,12 +101,36 @@ const SharedProjectCard: React.FC<SharedProjectCardProps> = ({
     return "View";
   };
 
+  const actions = (
+    <div className="flex items-center gap-2 flex-wrap justify-end">
+      {canPublish && (
+        <Button
+          size="sm"
+          className="h-8 text-xs gap-1"
+          onClick={handlePublish}
+          disabled={isPublishing}
+        >
+          <Globe className="h-3.5 w-3.5" />
+          {isPublishing ? "Publishing..." : "Publish"}
+        </Button>
+      )}
+      <Link
+        href={getFeedbackLink()}
+        className="inline-flex items-center text-xs rounded-md text-primary"
+      >
+        {getButtonText()}
+      </Link>
+    </div>
+  );
+
   if (viewMode === "list") {
     return (
       <div className="flex border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden bg-white dark:bg-gray-800">
         <div className="relative w-48 h-48 flex-shrink-0">
           <Image src={imageUrl} alt={title} fill className="object-cover" />
-          <span className={`absolute top-2 right-2 px-2.5 py-0.5 text-[10px] font-semibold rounded-full shadow-md ${statusBadge.className}`}>
+          <span
+            className={`absolute top-2 right-2 px-2.5 py-0.5 text-[10px] font-semibold rounded-full shadow-md ${statusBadge.className}`}
+          >
             {statusBadge.label}
           </span>
         </div>
@@ -97,24 +149,20 @@ const SharedProjectCard: React.FC<SharedProjectCardProps> = ({
             <span className="text-sm text-gray-500 dark:text-gray-400">
               {new Date(date).toLocaleDateString()}
             </span>
-
-            <Link
-              href={getFeedbackLink()}
-              className="inline-flex items-center text-xs rounded-md text-primary"            >
-              {getButtonText()}
-            </Link>
+            {actions}
           </div>
         </div>
       </div>
     );
   }
 
-  // Grid mode (default)
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden bg-white dark:bg-gray-800">
       <div className="relative h-48 w-full">
         <Image src={imageUrl} alt={title} fill className="object-cover" />
-        <span className={`absolute top-2 right-2 px-2.5 py-0.5 text-[10px] font-semibold rounded-full shadow-md ${statusBadge.className}`}>
+        <span
+          className={`absolute top-2 right-2 px-2.5 py-0.5 text-[10px] font-semibold rounded-full shadow-md ${statusBadge.className}`}
+        >
           {statusBadge.label}
         </span>
       </div>
@@ -132,13 +180,7 @@ const SharedProjectCard: React.FC<SharedProjectCardProps> = ({
           <span className="text-sm text-gray-500 dark:text-gray-400">
             {new Date(date).toLocaleDateString()}
           </span>
-
-          <Link
-            href={getFeedbackLink()}
-            className="inline-flex items-center text-xs rounded-md text-primary"
-          >
-            {getButtonText()}
-          </Link>
+          {actions}
         </div>
       </div>
     </div>

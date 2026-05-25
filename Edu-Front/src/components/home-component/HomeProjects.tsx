@@ -9,7 +9,9 @@ export default function HomeProjects() {
   const { data } = useGetAllProjectsQuery();
 
   const projectsData = (data?.projects as Project[]) || [];
-  const approvedProjects = projectsData.filter(project => project?.status === true);
+  const publishedProjects = projectsData.filter(
+    (project) => project?.status === "published"
+  );
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
@@ -17,7 +19,7 @@ export default function HomeProjects() {
           Dashboard Projects
         </h1>
         <div className="flex gap-2">
-          <button className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white p-2 rounded-md">
+          <button className="bg-emerald-400 hover:bg-emerald-500 dark:bg-emerald-500 dark:hover:bg-emerald-600 text-white p-2 rounded-md">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"
@@ -60,7 +62,7 @@ export default function HomeProjects() {
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {approvedProjects?.map((project) => (
+        {publishedProjects?.map((project) => (
           <ProjectCard project={project} />
         ))}
       </div>

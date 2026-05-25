@@ -42,6 +42,9 @@ export default function ProposalsPage() {
   const isTeacher = profileData?.data?.role === "teacher";
   const isAdmin = profileData?.data?.role === "admin";
 
+  // Mentor check: group must exist and have a mentor assigned by admin
+  const hasMentor = !!group?.mentor;
+
   // Filter proposals for the current student's group
   const myProposals = Allproposals?.data?.filter((p) => {
     const isSameGroup = p.group && profileData?.data?.group && p.group === profileData?.data?.group;
@@ -65,7 +68,8 @@ export default function ProposalsPage() {
   );
   const latestProposal = sortedProposals[0];
   const latestStatus = latestProposal ? getProposalStatus(latestProposal) : null;
-  const canSubmit = !latestProposal || latestStatus === "Rejected" || latestStatus === "Needs Revision";
+  // Can submit only if: no active proposal AND group has a mentor assigned
+  const canSubmit = (!latestProposal || latestStatus === "Rejected" || latestStatus === "Needs Revision") && hasMentor;
 
   if (isUserLoading || isProposalsLoading || isGroupLoading) {
     return (

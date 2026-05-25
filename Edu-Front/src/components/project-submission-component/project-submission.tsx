@@ -7,7 +7,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useSubmitProjectMutation } from "@/features/projectSubmitApi/projectSubmitApi";
+import { useGetDocumentationReadinessQuery } from "@/features/docApi/docApi";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Loader2, Lock, FileText } from "lucide-react";
 
 // Import our organized components and types
 import { BasicInfo } from "./sections/BasicInfo";
@@ -33,7 +36,16 @@ export interface ChecklistStatus {
 const ProjectSubmission = () => {
   const router = useRouter();
   const [submitProject] = useSubmitProjectMutation();
+  const {
+    data: readinessRes,
+    isLoading: isReadinessLoading,
+  } = useGetDocumentationReadinessQuery();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const docReady = readinessRes?.eligible === true;
+  const docProgress = readinessRes
+    ? `${readinessRes.approvedCount}/${readinessRes.total}`
+    : "0/7";
   const [progress, setProgress] = useState(0);
   const [checklistStatus, setChecklistStatus] = useState<ChecklistStatus>({
     title: false,
@@ -254,12 +266,47 @@ const ProjectSubmission = () => {
     }
   };
 
+  if (isReadinessLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!docReady) {
+    return (
+      <div className="max-w-lg mx-auto my-16 p-8 bg-card border rounded-2xl shadow-sm text-center space-y-4">
+        <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto">
+          <Lock className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+        </div>
+        <h2 className="text-xl font-bold text-foreground">Documentation Incomplete</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Project submission unlocks after all <strong>7 documentation chapters</strong> are
+          approved by your mentor. Progress: <strong>{docProgress}</strong> approved.
+        </p>
+        {readinessRes?.pending && readinessRes.pending.length > 0 && (
+          <ul className="text-left text-xs text-muted-foreground space-y-1 bg-muted/20 border rounded-lg p-4">
+            {readinessRes.pending.map((item) => (
+              <li key={item}>• {item}</li>
+            ))}
+          </ul>
+        )}
+        <Link href="/documentation">
+          <Button className="w-full">Go to Documentation</Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl p-6">
         <div className="mb-12">
           <h1 className="text-3xl font-bold text-foreground">Project Submission</h1>
-          <p className="text-muted-foreground mt-2">Create and submit your awesome project</p>
+          <p className="text-muted-foreground mt-2">
+            All documentation chapters are approved — complete and submit your project.
+          </p>
         </div>
 
         <div className="flex flex-col md:flex-row gap-8">

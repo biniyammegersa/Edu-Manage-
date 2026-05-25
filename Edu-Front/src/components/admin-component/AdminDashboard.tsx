@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, FolderGit2, CheckCircle, Clock, Trash2 } from "lucide-react";
-import { useGetAllProjectsQuery } from "@/features/getProjectsApi/getProjectsApi";
+import { useGetAdminProjectsQuery } from "@/features/getProjectsApi/getProjectsApi";
 import { useGetStudentsQuery, useGetTeachersQuery, useDeleteUserMutation } from "@/features/usersApi/usersApi";
 import { useGetProposalsQuery } from "@/features/proposalsApi/proposalsApi";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Project } from "@/type/project";
 
 export function AdminDashboard() {
-  const { data: projectsData, isLoading: isLoadingProjects } = useGetAllProjectsQuery();
+  const { data: projectsData, isLoading: isLoadingProjects } = useGetAdminProjectsQuery();
   const { data: studentsData, isLoading: isLoadingStudents } = useGetStudentsQuery();
   const { data: teachersData, isLoading: isLoadingTeachers } = useGetTeachersQuery();
   const { data: proposalsResponse, isLoading: isLoadingProposals } = useGetProposalsQuery();
@@ -46,6 +46,8 @@ export function AdminDashboard() {
   
   const totalStudents = studentsData?.length || 0;
   const totalProjects = projects.length;
+  const pendingProjects = projects.filter((p) => (p.status || "pending") === "pending").length;
+  const readyToPublish = projects.filter((p) => p.status === "approved").length;
   const approvedProposals = proposals.filter((p) => getProposalStatus(p) === "Approved").length;
   const pendingReviews = proposals.filter((p) => getProposalStatus(p) === "Pending").length;
 
@@ -60,7 +62,7 @@ export function AdminDashboard() {
       title: "Total Projects",
       value: isLoadingProjects ? "..." : totalProjects.toString(),
       icon: FolderGit2,
-      description: "Platform projects",
+      description: `${pendingProjects} pending · ${readyToPublish} ready to publish`,
     },
     {
       title: "Approved Proposals",

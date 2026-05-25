@@ -12,7 +12,7 @@ const SidebarProfile = () => {
         <div className="flex items-center gap-2">
           <Link
             href="/"
-            className="flex items-center gap-2 font-bold text-blue-600 text-xl"
+            className="flex items-center gap-2 font-bold text-emerald-500 text-xl"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -40,7 +40,7 @@ const SidebarProfile = () => {
               <path d="M12 13.5V8" />
             </svg>
 
-            <span className="text-xl font-bold text-blue-500">Edu-Manage</span>
+            <span className="text-xl font-bold text-[#1a9e7a]">Edu-Manage</span>
           </Link>
         </div>
       </div>

@@ -203,7 +203,7 @@ const ProjectDetail = ({ id }: { id: string }) => {
 
             <button
               onClick={() => setExpanded(!expanded)}
-              className="mt-2 text-sm text-blue-500 hover:underline"
+              className="mt-2 text-sm text-emerald-500 hover:underline"
             >
               {expanded ? "Show Less" : "Show More"}
             </button>

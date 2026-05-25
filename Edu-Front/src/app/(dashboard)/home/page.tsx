@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import HomeProjects from "@/components/home-component/HomeProjects";
 import { AdminDashboard } from "@/components/admin-component/AdminDashboard";
 import { MentorDashboard } from "@/components/mentor-component/MentorDashboard";
@@ -9,7 +10,16 @@ import { useGetUserQuery } from "@/features/profileApi/profileApi";
 import { Loader2 } from "lucide-react";
 
 export default function HomePage() {
+  const router = useRouter();
   const { data: userResponse, isLoading } = useGetUserQuery();
+
+  const role = userResponse?.data?.role;
+
+  useEffect(() => {
+    if (!isLoading && role === "community") {
+      router.replace("/community");
+    }
+  }, [isLoading, role, router]);
 
   if (isLoading) {
     return (
@@ -19,7 +29,13 @@ export default function HomePage() {
     );
   }
 
-  const role = userResponse?.data?.role;
+  if (role === "community") {
+    return (
+      <div className="flex justify-center items-center h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (role === "admin") {
     return <AdminDashboard />;

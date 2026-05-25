@@ -14,10 +14,45 @@ export const getProjectsApi = createApi({
   baseQuery,
   tagTypes: ["Project"],
   endpoints: (builder) => ({
-    // Get all projects
+    // Get all PUBLISHED projects (authenticated)
     getAllProjects: builder.query<Projects, void>({
       query: () => ({
         url: PROJECT_ROUTES.BASE,
+        method: "GET",
+        token: Cookies.get("access_token"),
+      }),
+      providesTags: ["Project"],
+    }),
+    // Public published projects — no login required
+    getPublicProjects: builder.query<Projects, void>({
+      query: () => ({
+        url: PROJECT_ROUTES.PUBLIC,
+        method: "GET",
+      }),
+      providesTags: ["Project"],
+    }),
+    // Get all projects for mentor (pending, approved, published)
+    getMentorProjects: builder.query<{ success: boolean; projects: Project[] }, void>({
+      query: () => ({
+        url: `${PROJECT_ROUTES.BASE}/mentor/my-projects`,
+        method: "GET",
+        token: Cookies.get("access_token"),
+      }),
+      providesTags: ["Project"],
+    }),
+    // Get all projects for admin (pending, approved, published)
+    getAdminProjects: builder.query<{ success: boolean; projects: Project[] }, void>({
+      query: () => ({
+        url: `${PROJECT_ROUTES.BASE}/admin/all`,
+        method: "GET",
+        token: Cookies.get("access_token"),
+      }),
+      providesTags: ["Project"],
+    }),
+    // Get APPROVED projects waiting for admin to publish (admin only)
+    getApprovedProjects: builder.query<{ success: boolean; projects: Project[] }, void>({
+      query: () => ({
+        url: `${PROJECT_ROUTES.BASE}/admin/approved`,
         method: "GET",
         token: Cookies.get("access_token"),
       }),
@@ -30,6 +65,15 @@ export const getProjectsApi = createApi({
         token: Cookies.get("access_token"),
       }),
       providesTags: ["Project"],
+    }),
+    // Admin: publish a project
+    publishProject: builder.mutation<{ success: boolean; project: Project }, string>({
+      query: (projectId) => ({
+        url: `${PROJECT_ROUTES.BASE}/${projectId}/publish`,
+        method: "PUT",
+        token: Cookies.get("access_token"),
+      }),
+      invalidatesTags: ["Project"],
     }),
     // Like a project
     likeProject: builder.mutation<Project, LikeProjectRequest>({
@@ -46,7 +90,7 @@ export const getProjectsApi = createApi({
       query: (projectId) => ({
         url: `${PROJECT_ROUTES.BASE}/${projectId}/view`,
         method: "POST",
-        token: Cookies.get("access_token"), // optional if not needed
+        token: Cookies.get("access_token"),
       }),
       invalidatesTags: ["Project"],
     }),
@@ -55,7 +99,12 @@ export const getProjectsApi = createApi({
 
 export const {
   useGetAllProjectsQuery,
+  useGetPublicProjectsQuery,
+  useGetMentorProjectsQuery,
+  useGetAdminProjectsQuery,
+  useGetApprovedProjectsQuery,
   useGetProjectByIdQuery,
+  usePublishProjectMutation,
   useLikeProjectMutation,
   useIncrementViewMutation
 } = getProjectsApi;

@@ -18,6 +18,26 @@ export const docApi = createApi({
       providesTags: ["ChapterSubmission"],
     }),
 
+    getDocumentationReadiness: builder.query<
+      {
+        success: boolean;
+        eligible: boolean;
+        message?: string;
+        approvedCount: number;
+        total: number;
+        pending?: string[];
+        hasSubmittedProject?: boolean;
+      },
+      void
+    >({
+      query: () => ({
+        url: DOCUMENTATION_ROUTES.READINESS,
+        method: "GET",
+        token: Cookies.get("access_token"),
+      }),
+      providesTags: ["ChapterSubmission"],
+    }),
+
     // Student/Advisor: Fetch detailed submission info
     getSubmissionDetails: builder.query<any, string>({
       query: (id) => ({
@@ -48,6 +68,15 @@ export const docApi = createApi({
         token: Cookies.get("access_token"),
       }),
       providesTags: ["PendingReviews"],
+    }),
+
+    getMentorDocumentationHistory: builder.query<any, void>({
+      query: () => ({
+        url: DOCUMENTATION_ROUTES.MENTOR_HISTORY,
+        method: "GET",
+        token: Cookies.get("access_token"),
+      }),
+      providesTags: ["ChapterSubmission", "PendingReviews"],
     }),
 
     // Advisor: Submit verdict & comments
@@ -90,9 +119,11 @@ export const docApi = createApi({
 
 export const {
   useGetMySubmissionsQuery,
+  useGetDocumentationReadinessQuery,
   useGetSubmissionDetailsQuery,
   useSubmitChapterMutation,
   useGetPendingReviewsQuery,
+  useGetMentorDocumentationHistoryQuery,
   useSubmitReviewMutation,
   useGetSubmissionFeedbackQuery,
   useAnalyzeChapterPlagiarismMutation,

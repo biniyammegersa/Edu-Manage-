@@ -58,7 +58,7 @@ export type Project = {
   toolsAndMachines: ToolsAndMachines;
   appsAndPlatforms: AppPlatform[];
   codeAndDocumentation: CodeAndDocumentation;
-  status: boolean;
+  status: "pending" | "approved" | "published" | string;
   reviewedByTeacherId?: string;
   comments: Comment[];
   likes: [string];

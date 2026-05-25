@@ -63,6 +63,14 @@ export const groupApi = createApi({
       }),
       providesTags: ["Group"],
     }),
+    getMentorGroups: builder.query<{ success: boolean; data: GroupType[] }, void>({
+      query: () => ({
+        url: "/api/groups/mentor/groups",
+        method: "GET",
+        token: Cookies.get("access_token"),
+      }),
+      providesTags: ["Group"],
+    }),
     assignMentor: builder.mutation<
       { success: boolean; message: string },
       { groupId: string; mentorId: string }
@@ -107,6 +115,7 @@ export const {
   useGetMyGroupQuery,
   useCreateGroupMutation,
   useGetAllGroupsQuery,
+  useGetMentorGroupsQuery,
   useAssignMentorMutation,
   useGetGroupMessagesQuery,
   useSendGroupMessageMutation,

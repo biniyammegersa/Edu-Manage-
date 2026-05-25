@@ -15,14 +15,26 @@ import Link from "next/link";
 import { useGetUserQuery } from "@/features/profileApi/profileApi";
 import { usePathname } from "next/navigation";
 
-export default function ProjectCard({ project }: { project: Project }) {
+export default function ProjectCard({
+  project,
+  detailBasePath,
+}: {
+  project: Project;
+  detailBasePath?: string;
+}) {
   const { data: user } = useGetUsersQuery();
   const { data: profile } = useGetUserQuery();
   const [likeProject] = useLikeProjectMutation();
   const userData = user as profileType[];
   const teamMembers = project?.teamMembers;
   const pathname = usePathname();
-  const isDetailHome = pathname.includes("/home");
+  const detailPath =
+    detailBasePath ??
+    (pathname.includes("/community")
+      ? "/community/project-detail"
+      : pathname.includes("/home")
+        ? "/home/project-detail"
+        : "/project-detail");
 
   const isLiked = project?.likes?.includes(profile?.data?._id || "");
 
@@ -42,12 +54,7 @@ export default function ProjectCard({ project }: { project: Project }) {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg overflow-hidden shadow-sm border dark:border-gray-700">
-      <Link
-        href={`/${isDetailHome ? "home/project-detail" : "project-detail"}/${
-          project?._id
-        }`}
-        className=""
-      >
+      <Link href={`${detailPath}/${project?._id}`} className="">
         <div className="bg-gray-200 dark:bg-gray-700 h-[200px] flex items-center justify-center relative overflow-hidden">
           <Image
             src={project?.coverImage || "/placeholder-project.jpg"}
@@ -85,7 +92,7 @@ export default function ProjectCard({ project }: { project: Project }) {
               </span>
             </div>
             <div className="flex items-center gap-1">
-              <MessageSquare className="h-4 w-4 text-blue-500 dark:text-blue-400" />
+              <MessageSquare className="h-4 w-4 text-emerald-500 dark:text-emerald-400" />
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 {project?.comments.length}
               </span>

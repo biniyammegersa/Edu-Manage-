@@ -3,9 +3,11 @@
 import React, { useState } from "react";
 import PlagiarismPanel from "@/components/mentor-component/PlagiarismPanel";
 import { 
-  useGetPendingReviewsQuery, 
+  useGetPendingReviewsQuery,
+  useGetMentorDocumentationHistoryQuery,
   useSubmitReviewMutation,
-  useGetSubmissionDetailsQuery
+  useGetSubmissionDetailsQuery,
+  useGetSubmissionFeedbackQuery,
 } from "@/features/docApi/docApi";
 import { 
   CheckCircle2, 
@@ -28,14 +30,54 @@ interface SectionComment {
   severity: "Minor" | "Major" | "Critical";
 }
 
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case "Approved":
+      return (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+          Approved
+        </span>
+      );
+    case "Revisions_Requested":
+      return (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20">
+          Revisions
+        </span>
+      );
+    case "Rejected":
+      return (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 border border-rose-500/20">
+          Rejected
+        </span>
+      );
+    default:
+      return (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+          Under Review
+        </span>
+      );
+  }
+};
+
 export default function AdvisorReviewsPage() {
   const { data: pendingRes, isLoading: isPendingLoading, refetch } = useGetPendingReviewsQuery();
+  const {
+    data: historyRes,
+    isLoading: isHistoryLoading,
+    refetch: refetchHistory,
+  } = useGetMentorDocumentationHistoryQuery();
   const [submitReview, { isLoading: isSubmitting }] = useSubmitReviewMutation();
 
+  const [queueTab, setQueueTab] = useState<"pending" | "history">("pending");
   const [activeSubmissionId, setActiveSubmissionId] = useState<string | null>(null);
   
   // Fetch details of active submission
   const { data: detailsRes, isLoading: isDetailsLoading } = useGetSubmissionDetailsQuery(
+    activeSubmissionId || "",
+    { skip: !activeSubmissionId }
+  );
+
+  const { data: feedbackRes, isLoading: isFeedbackLoading } = useGetSubmissionFeedbackQuery(
     activeSubmissionId || "",
     { skip: !activeSubmissionId }
   );
@@ -52,8 +94,15 @@ export default function AdvisorReviewsPage() {
   const [submitSuccess, setSubmitSuccess] = useState("");
 
   const pendingList = pendingRes?.data || [];
+  const historyList = historyRes?.data || [];
+  const displayList = queueTab === "pending" ? pendingList : historyList;
+  const isListLoading = queueTab === "pending" ? isPendingLoading : isHistoryLoading;
+
   const activeSub = detailsRes?.data;
   const latestVersion = activeSub?.versions?.[activeSub.versions.length - 1];
+  const feedbackHistory = feedbackRes?.data || [];
+  const showReviewForm =
+    queueTab === "pending" && activeSub?.currentStatus === "Under_Review";
 
   const handleAddComment = () => {
     if (!newSecName.trim() || !newSecComment.trim()) return;
@@ -98,8 +147,9 @@ export default function AdvisorReviewsPage() {
         setSubmitSuccess("Review verdict and comments posted successfully!");
         setGeneralFeedback("");
         setSectionComments([]);
-        setActiveSubmissionId(null);
+        setQueueTab("history");
         refetch();
+        refetchHistory();
       } else {
         setSubmitError(res.message || "Failed to submit review.");
       }
@@ -127,22 +177,58 @@ export default function AdvisorReviewsPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         
-        {/* COLUMN 1: Pending Queue (left sidebar) */}
+        {/* COLUMN 1: Queue (pending + history) */}
         <div className="xl:col-span-4 bg-card border rounded-2xl p-6 shadow-sm h-fit">
-          <h2 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary" />
-            Pending Submission Queue
-          </h2>
+          <div className="flex rounded-lg border p-1 mb-6 bg-muted/20">
+            <button
+              type="button"
+              onClick={() => {
+                setQueueTab("pending");
+                setActiveSubmissionId(null);
+                setSubmitError("");
+                setSubmitSuccess("");
+              }}
+              className={`flex-1 py-2 text-xs font-bold rounded-md transition-colors flex items-center justify-center gap-1.5 ${
+                queueTab === "pending"
+                  ? "bg-background text-primary shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              Pending ({pendingList.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setQueueTab("history");
+                setActiveSubmissionId(null);
+                setSubmitError("");
+                setSubmitSuccess("");
+              }}
+              className={`flex-1 py-2 text-xs font-bold rounded-md transition-colors flex items-center justify-center gap-1.5 ${
+                queueTab === "history"
+                  ? "bg-background text-primary shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              History ({historyList.length})
+            </button>
+          </div>
 
-          {isPendingLoading ? (
-            <div className="text-sm text-muted-foreground italic py-6">Loading pending queue...</div>
-          ) : pendingList.length === 0 ? (
+          {isListLoading ? (
+            <div className="text-sm text-muted-foreground italic py-6">
+              Loading {queueTab === "pending" ? "pending queue" : "review history"}...
+            </div>
+          ) : displayList.length === 0 ? (
             <div className="text-sm text-muted-foreground italic py-8 text-center bg-muted/10 border border-dashed rounded-xl">
-              No pending chapters waiting for your review.
+              {queueTab === "pending"
+                ? "No pending chapters waiting for your review."
+                : "No reviewed chapters yet. Completed reviews will appear here."}
             </div>
           ) : (
-            <div className="space-y-4">
-              {pendingList.map((sub: any) => {
+            <div className="space-y-4 max-h-[520px] overflow-y-auto pr-1">
+              {displayList.map((sub: any) => {
                 const isSelected = activeSubmissionId === sub._id;
                 return (
                   <button
@@ -153,22 +239,28 @@ export default function AdvisorReviewsPage() {
                       setSubmitSuccess("");
                     }}
                     className={`w-full text-left p-4 rounded-xl transition-all duration-300 border flex items-start justify-between gap-2 ${
-                      isSelected 
-                        ? "bg-primary/5 border-primary/40 shadow-sm" 
+                      isSelected
+                        ? "bg-primary/5 border-primary/40 shadow-sm"
                         : "bg-muted/10 border-border hover:bg-muted/30"
                     }`}
                   >
                     <div className="space-y-1.5 flex-grow">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                          Chapter {sub.chapterNumber}
+                          Ch. {sub.chapterNumber}
                         </span>
+                        {queueTab === "history" && getStatusBadge(sub.currentStatus)}
                         <span className="text-[10px] text-muted-foreground font-semibold flex items-center gap-1">
                           <Users className="w-3 h-3" /> {sub.group?.name}
                         </span>
                       </div>
                       <h4 className="font-bold text-sm text-foreground line-clamp-1">{sub.title}</h4>
                       <p className="text-[11px] text-muted-foreground line-clamp-1">{sub.project?.title}</p>
+                      {queueTab === "history" && sub.updatedAt && (
+                        <p className="text-[10px] text-muted-foreground">
+                          Reviewed {new Date(sub.updatedAt).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-2" />
                   </button>
@@ -189,7 +281,7 @@ export default function AdvisorReviewsPage() {
               <BookOpen className="w-12 h-12 text-muted-foreground mb-4" />
               <h3 className="font-bold text-foreground text-base">No Active Submission Selected</h3>
               <p className="text-muted-foreground text-xs mt-2 max-w-sm">
-                Select a pending student submission from the queue on the left to start your academic validation and grading.
+                Select a submission from the {queueTab === "pending" ? "pending queue" : "review history"} on the left.
               </p>
             </div>
           ) : (
@@ -252,12 +344,75 @@ export default function AdvisorReviewsPage() {
                 </div>
               </div>
 
-              {/* RIGHT HALF: Grading & Feedback Panel */}
+              {/* RIGHT HALF: Grading or saved feedback history */}
               <div className="bg-card border rounded-2xl p-6 shadow-sm flex flex-col h-[650px] overflow-hidden">
                 <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2 border-b pb-3">
-                  <Sparkles className="w-4.5 h-4.5 text-primary" /> Feedback Grading Board
+                  <Sparkles className="w-4.5 h-4.5 text-primary" />
+                  {showReviewForm ? "Feedback Grading Board" : "Review History"}
                 </h3>
 
+                {!showReviewForm ? (
+                  <div className="flex-grow overflow-y-auto space-y-4 pr-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {getStatusBadge(activeSub.currentStatus)}
+                      <span className="text-xs text-muted-foreground">
+                        Chapter {activeSub.chapterNumber} · v{latestVersion?.versionNumber}
+                      </span>
+                    </div>
+
+                    {isFeedbackLoading ? (
+                      <p className="text-sm text-muted-foreground italic">Loading feedback...</p>
+                    ) : feedbackHistory.length === 0 ? (
+                      <p className="text-sm text-muted-foreground italic">
+                        No saved feedback records for this submission yet.
+                      </p>
+                    ) : (
+                      feedbackHistory.map((fb: any) => (
+                        <div
+                          key={fb._id}
+                          className="border rounded-xl p-4 space-y-3 bg-muted/10"
+                        >
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            {getStatusBadge(fb.verdict)}
+                            <span className="text-[10px] text-muted-foreground">
+                              {fb.advisor?.fullName || "Mentor"} ·{" "}
+                              {new Date(fb.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">
+                              General feedback
+                            </div>
+                            <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
+                              {fb.generalFeedback}
+                            </p>
+                          </div>
+                          {fb.sectionComments?.length > 0 && (
+                            <div className="space-y-2">
+                              <div className="text-[10px] font-bold text-muted-foreground uppercase">
+                                Section comments
+                              </div>
+                              {fb.sectionComments.map((c: SectionComment, idx: number) => (
+                                <div
+                                  key={idx}
+                                  className="bg-muted/20 border p-2.5 rounded-lg text-[11px]"
+                                >
+                                  <div className="font-bold text-foreground">
+                                    {c.sectionName}{" "}
+                                    <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-muted text-muted-foreground">
+                                      {c.severity}
+                                    </span>
+                                  </div>
+                                  <div className="text-muted-foreground mt-0.5">{c.commentText}</div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : (
                 <form onSubmit={handleReviewSubmit} className="flex-grow overflow-y-auto space-y-6 pr-2">
                   
                   {/* Verdict Selectors */}
@@ -400,6 +555,7 @@ export default function AdvisorReviewsPage() {
                   </div>
 
                 </form>
+                )}
               </div>
 
             </div>

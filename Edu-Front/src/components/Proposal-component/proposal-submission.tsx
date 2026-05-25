@@ -14,9 +14,9 @@ import { useGetUserQuery } from "@/features/profileApi/profileApi";
 import { useSubmitProposalMutation } from "@/features/proposalSubmitApi/proposalSubmitApi";
 import { useGetTeachersQuery } from "@/features/usersApi/usersApi";
 import { useGetProposalsQuery } from "@/features/proposalsApi/proposalsApi";
-import { useGetMyGroupQuery } from "@/features/groupApi/groupApi";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useStudentGroup } from "@/hooks/use-student-group";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ACCEPTED_FILE_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"];
@@ -42,12 +42,19 @@ const ProposalSubmission = () => {
   const { data: teachers = [] } = useGetTeachersQuery();
   const [submitProposal] = useSubmitProposalMutation();
   const { data: proposalsResponse, isLoading: isLoadingProposals } = useGetProposalsQuery();
-  const { data: groupResponse, isLoading: isLoadingGroup } = useGetMyGroupQuery();
-  const group = groupResponse?.data;
+  
+  // Use the new custom hook to check student group status
+  const { 
+    group, 
+    isValid: hasValidGroup, 
+    isLoading: isLoadingGroup,
+    hasMentor,
+    error: groupError 
+  } = useStudentGroup();
 
   const proposals = proposalsResponse?.data || [];
   const myProposals = proposals.filter((p) => {
-    const isSameGroup = p.group && currentUser?.data?.group && p.group === currentUser?.data?.group;
+    const isSameGroup = p.group && group?._id && p.group === group._id;
     const memberIds = group?.members?.map((m: any) => typeof m === 'object' ? m._id : m) || [];
     const isGroupMember = p.student?._id && memberIds.includes(p.student._id);
     return isSameGroup || isGroupMember;
@@ -78,6 +85,14 @@ const ProposalSubmission = () => {
   });
 
   const onSubmit = async (data: ProposalFormValues) => {
+    // Validate that student has a group
+    if (!hasValidGroup) {
+      toast.error("Invalid group status", {
+        description: "You must be part of a valid project group to submit a proposal.",
+      });
+      return;
+    }
+
     if (!currentUser?.data?._id || !data.document) {
       toast.error("Missing required information", {
         description: "Please make sure you're logged in and have selected a document.",
@@ -125,7 +140,7 @@ const ProposalSubmission = () => {
     );
   }
 
-  if (!currentUser?.data?.group) {
+  if (!hasValidGroup) {
     return (
       <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 text-center space-y-4 my-10 transition-all duration-300">
         <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto">
@@ -149,21 +164,21 @@ const ProposalSubmission = () => {
     );
   }
 
-  if (groupResponse && !group?.mentor) {
+  if (hasValidGroup && !hasMentor) {
     return (
-      <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 text-center space-y-4 my-10 transition-all duration-300">
+      <div className="max-w-md mx-auto p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-amber-200 dark:border-amber-700 text-center space-y-4 my-10 transition-all duration-300">
         <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto">
           <AlertCircle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
         </div>
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mentor Assignment Pending</h2>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mentor Not Yet Assigned</h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-          Your project group <strong>"{group?.name}"</strong> does not have an assigned mentor yet.
+          Your group <strong>"{group?.name}"</strong> does not have a mentor assigned yet.
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-500">
-          Please contact the administrator or your coordinator to assign a mentor to your group before submitting your proposal.
+          An administrator must assign a mentor to your group before you can submit a proposal. Please contact your administrator.
         </p>
         <div className="pt-2">
-          <Link href="/home">
+          <Link href="/home" className="block">
             <Button className="w-full bg-[#1a9e7a] hover:bg-[#158a6a] text-white">
               Back to Dashboard
             </Button>
@@ -258,7 +273,7 @@ const ProposalSubmission = () => {
                           className="text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-300"
                         >
                           Drop your file here, or{" "}
-                          <span className="text-blue-600 dark:text-blue-400">click to browse</span>
+                          <span className="text-emerald-600 dark:text-emerald-400">click to browse</span>
                         </label>
                         <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
                           PDF, DOC up to 10MB

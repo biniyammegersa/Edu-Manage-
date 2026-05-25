@@ -219,7 +219,7 @@ const EvaluationForm = ({ proposalId }: EvaluationFormProps) => {
   const report = proposal?.plagiarismReport;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 py-6 px-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 py-6 px-4 lg:items-start">
       {/* LEFT COLUMN: Evaluation Feedback Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="lg:col-span-7 space-y-6">
         <Card className="shadow-sm">
@@ -422,9 +422,9 @@ const EvaluationForm = ({ proposalId }: EvaluationFormProps) => {
         </Card>
       </form>
 
-      {/* RIGHT COLUMN: AI Originality & Plagiarism Analyzer Panel */}
-      <div className="lg:col-span-5 space-y-6 animate-fade-in">
-        <Card className="border border-border shadow-md bg-card/70 backdrop-blur-md relative overflow-hidden flex flex-col h-full rounded-2xl">
+      {/* RIGHT COLUMN: whole originality panel scrolls here, not the page */}
+      <div className="lg:col-span-5 animate-fade-in lg:sticky lg:top-6 lg:self-start w-full max-h-[calc(100vh-11rem)] overflow-y-auto overscroll-contain rounded-2xl">
+        <Card className="border border-border shadow-md bg-card/70 backdrop-blur-md relative rounded-2xl">
           <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
             <Sparkles className="w-24 h-24 text-primary animate-pulse" />
           </div>
@@ -450,18 +450,18 @@ const EvaluationForm = ({ proposalId }: EvaluationFormProps) => {
                 </p>
               </div>
               <div className="w-full max-w-[220px] h-1.5 bg-muted rounded-full overflow-hidden shadow-inner">
-                <div className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 rounded-full animate-pulse" style={{ width: "100%" }} />
+                <div className="h-full bg-gradient-to-r from-purple-500 to-emerald-600 rounded-full animate-pulse" style={{ width: "100%" }} />
               </div>
             </CardContent>
           ) : report ? (
             <>
               {/* Originality Score and Risk Pill */}
-              <div className="p-5 bg-gradient-to-br from-purple-500/[0.01] to-indigo-500/[0.01] border-b">
+              <div className="p-5 bg-gradient-to-br from-purple-500/[0.01] to-emerald-500/[0.01] border-b">
                 <div className="flex items-center justify-between gap-6">
                   <div className="space-y-1.5 flex-grow">
                     <div className="text-[10px] text-muted-foreground font-black uppercase tracking-wider">Originality Rating</div>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600 tracking-tighter">
+                      <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-emerald-600 tracking-tighter">
                         {report.originalityScore}%
                       </span>
                       <span className="text-xs text-muted-foreground font-medium">unique content</span>
@@ -500,7 +500,7 @@ const EvaluationForm = ({ proposalId }: EvaluationFormProps) => {
               </div>
 
               {/* Plagiarism Report Content Body */}
-              <div className="p-5 space-y-5 pr-2 scrollbar-thin flex-grow">
+              <div className="p-5 space-y-5 pr-2">
                 {/* Summary */}
                 <div className="space-y-1.5 bg-muted/20 border p-4 rounded-2xl shadow-xs">
                   <h4 className="text-[10px] font-black text-foreground flex items-center gap-1.5 uppercase tracking-wider">
@@ -598,7 +598,7 @@ const EvaluationForm = ({ proposalId }: EvaluationFormProps) => {
               </div>
 
               {/* Recalculate Scan */}
-              <CardFooter className="border-t pt-4 flex gap-3 mt-auto bg-muted/10">
+              <CardFooter className="border-t pt-4 flex gap-3 bg-muted/10">
                 <Button 
                   type="button" 
                   variant="outline" 
@@ -613,7 +613,7 @@ const EvaluationForm = ({ proposalId }: EvaluationFormProps) => {
               </CardFooter>
             </>
           ) : (
-            <CardContent className="py-24 text-center flex flex-col items-center justify-center space-y-6 flex-grow">
+            <CardContent className="py-24 text-center flex flex-col items-center justify-center space-y-6">
               <div className="w-16 h-16 rounded-full bg-purple-500/10 text-purple-600 border border-purple-500/20 flex items-center justify-center shadow-inner animate-pulse">
                 <Sparkles className="w-8 h-8" />
               </div>
@@ -625,7 +625,7 @@ const EvaluationForm = ({ proposalId }: EvaluationFormProps) => {
               </div>
               <Button 
                 type="button"
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 animate-bounce"
+                className="bg-gradient-to-r from-purple-600 to-emerald-600 hover:from-purple-700 hover:to-emerald-700 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 animate-bounce"
                 onClick={handleScanClick}
                 disabled={isScanning}
               >

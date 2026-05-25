@@ -30,6 +30,7 @@ export const PROPOSAL_SUBMIT_ROUTES = {
 // Project Submit routes
 export const PROJECT_ROUTES = {
   BASE: "/api/projects",
+  PUBLIC: "/api/public/projects",
   SUBMIT: "/api/projects/create",
 } as const;
 
@@ -52,8 +53,10 @@ export const PROJECT_FEEDBACK_ROUTES = {
 export const DOCUMENTATION_ROUTES = {
   SUBMIT: "/api/documentation/submit",
   MY_SUBMISSIONS: "/api/documentation/my-submissions",
+  READINESS: "/api/documentation/readiness",
   DETAILS: (id: string) => `/api/documentation/details/${id}`,
   PENDING: "/api/documentation/pending",
+  MENTOR_HISTORY: "/api/documentation/mentor/history",
   REVIEW: (id: string) => `/api/documentation/feedback/review/${id}`,
   FEEDBACK: (id: string) => `/api/documentation/feedback/submission/${id}`
 } as const;

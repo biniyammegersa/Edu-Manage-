@@ -54,7 +54,7 @@ const ProfileComponent = () => {
                 <h1 className="text-5xl font-bold bg-clip-text mb-4">
                   {profileData?.fullName}
                 </h1>
-                <div className="inline-block px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full text-blue-600 font-medium mb-4">
+                <div className="inline-block px-4 py-2 bg-gradient-to-r from-emerald-100 to-purple-100 rounded-full text-emerald-600 font-medium mb-4">
                   {profileData?.role}
                 </div>
                 <p className="text-2xl text-gray-600 mb-6">
@@ -62,15 +62,15 @@ const ProfileComponent = () => {
                 </p>
                 <div className="flex flex-wrap gap-4 justify-center md:justify-start">
                   <div className="flex items-center gap-2 text-gray-600">
-                    <Briefcase className="w-5 h-5 text-blue-600" />
+                    <Briefcase className="w-5 h-5 text-emerald-600" />
                     <span>5+ Years Experience</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
-                    <Award className="w-5 h-5 text-blue-600" />
+                    <Award className="w-5 h-5 text-emerald-600" />
                     <span>10+ Projects</span>
                   </div>
                   <div className="flex items-center gap-2 text-gray-600">
-                    <Calendar className="w-5 h-5 text-blue-600" />
+                    <Calendar className="w-5 h-5 text-emerald-600" />
                     <span>Available for Work</span>
                   </div>
                 </div>
@@ -109,7 +109,7 @@ const ProfileComponent = () => {
                     {profileData?.skills?.map((skill) => (
                       <span
                         key={skill}
-                        className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 px-4 py-2 rounded-full text-sm font-medium hover:from-blue-200 hover:to-purple-200 transition-all duration-300 cursor-default transform hover:scale-105"
+                        className="bg-gradient-to-r from-emerald-100 to-purple-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium hover:from-emerald-200 hover:to-purple-200 transition-all duration-300 cursor-default transform hover:scale-105"
                       >
                         {skill}
                       </span>
@@ -131,21 +131,21 @@ const ProfileComponent = () => {
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="flex flex-col gap-4">
-                  <div className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition-colors duration-200 group">
-                    <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl group-hover:from-blue-100 group-hover:to-purple-100 transition-all duration-300">
-                      <Phone size={20} className="text-blue-600" />
+                  <div className="flex items-center gap-3 text-gray-700 hover:text-emerald-600 transition-colors duration-200 group">
+                    <div className="p-3 bg-gradient-to-r from-emerald-50 to-purple-50 rounded-xl group-hover:from-emerald-100 group-hover:to-purple-100 transition-all duration-300">
+                      <Phone size={20} className="text-emerald-600" />
                     </div>
                     <span className="text-base">{profileData?.phone}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition-colors duration-200 group">
-                    <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl group-hover:from-blue-100 group-hover:to-purple-100 transition-all duration-300">
-                      <Mail size={20} className="text-blue-600" />
+                  <div className="flex items-center gap-3 text-gray-700 hover:text-emerald-600 transition-colors duration-200 group">
+                    <div className="p-3 bg-gradient-to-r from-emerald-50 to-purple-50 rounded-xl group-hover:from-emerald-100 group-hover:to-purple-100 transition-all duration-300">
+                      <Mail size={20} className="text-emerald-600" />
                     </div>
                     <span className="text-base">{profileData?.email}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition-colors duration-200 group">
-                    <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl group-hover:from-blue-100 group-hover:to-purple-100 transition-all duration-300">
-                      <MapPin size={20} className="text-blue-600" />
+                  <div className="flex items-center gap-3 text-gray-700 hover:text-emerald-600 transition-colors duration-200 group">
+                    <div className="p-3 bg-gradient-to-r from-emerald-50 to-purple-50 rounded-xl group-hover:from-emerald-100 group-hover:to-purple-100 transition-all duration-300">
+                      <MapPin size={20} className="text-emerald-600" />
                     </div>
                     <span className="text-base">{profileData?.location}</span>
                   </div>
@@ -166,19 +166,19 @@ const ProfileComponent = () => {
                     <a
                       key={link._id}
                       href={link.url}
-                      className="flex items-center gap-3 text-gray-700 hover:text-blue-600 transition-all duration-300 group"
+                      className="flex items-center gap-3 text-gray-700 hover:text-emerald-600 transition-all duration-300 group"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <div className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl group-hover:from-blue-100 group-hover:to-purple-100 transition-all duration-300">
+                      <div className="p-3 bg-gradient-to-r from-emerald-50 to-purple-50 rounded-xl group-hover:from-emerald-100 group-hover:to-purple-100 transition-all duration-300">
                         {link.platform === "github" && (
-                          <Github size={20} className="text-blue-600" />
+                          <Github size={20} className="text-emerald-600" />
                         )}
                         {link.platform === "linkedin" && (
-                          <Linkedin size={20} className="text-blue-600" />
+                          <Linkedin size={20} className="text-emerald-600" />
                         )}
                         {link.platform === "twitter" && (
-                          <Twitter size={20} className="text-blue-600" />
+                          <Twitter size={20} className="text-emerald-600" />
                         )}
                       </div>
                       <span className="text-base group-hover:underline">

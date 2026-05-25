@@ -132,7 +132,7 @@ export default function FeedbackForm({ projectId }: FeedbackFormProps) {
         >
           Project
         </Link>
-        <ChevronRight className="h-4 w-4 mx-2 text-blue-500" />
+        <ChevronRight className="h-4 w-4 mx-2 text-emerald-500" />
         <span className="hover:text-gray-400 cursor-pointer text-foreground font-medium">
           Feedback
         </span>
@@ -158,7 +158,7 @@ export default function FeedbackForm({ projectId }: FeedbackFormProps) {
           {/* Project Cover Image */}
           <div className="flex-1 flex-col h-full">
             <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-blue-500 shrink-0" />
+              <Users className="w-5 h-5 text-emerald-500 shrink-0" />
               <h3 className="text-lg font-semibold dark:text-white break-words">
                 Project Collaborators
               </h3>
@@ -177,7 +177,7 @@ export default function FeedbackForm({ projectId }: FeedbackFormProps) {
           {/* Collaborators List */}
           <div className="flex flex-col h-full">
             <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-blue-500 shrink-0" />
+              <Users className="w-5 h-5 text-emerald-500 shrink-0" />
               <h3 className="text-lg font-semibold dark:text-white break-words">
                 Project Collaborators
               </h3>

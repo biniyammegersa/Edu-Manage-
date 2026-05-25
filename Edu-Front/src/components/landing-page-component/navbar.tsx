@@ -51,7 +51,7 @@ export default function Navbar() {
           <div className="flex items-center gap-8">
             <Link
               href="/"
-              className="flex items-center gap-2 font-bold text-blue-600 text-xl"
+              className="flex items-center gap-2 font-bold text-[#1a9e7a] text-xl"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -82,7 +82,7 @@ export default function Navbar() {
             </Link>
             <nav className="hidden md:flex items-center gap-6">
               <Link
-                href="#"
+                href="/projects"
                 className="text-muted-foreground hover:text-foreground transition-colors font-medium"
               >
                 Projects
@@ -155,7 +155,7 @@ export default function Navbar() {
             ) : (
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button className="bg-white text-blue-600 border border-blue-600 hover:bg-blue-50">
+                  <Button className="bg-[#1a9e7a] hover:bg-[#158a6a] text-white border-0">
                     Login
                   </Button>
                 </PopoverTrigger>

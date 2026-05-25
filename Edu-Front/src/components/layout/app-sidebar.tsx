@@ -33,6 +33,7 @@ import {
   Users,
   FileText,
   MessageSquare,
+  Globe,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -53,6 +54,12 @@ const menuItems: MenuItem[] = [
     url: "/home",
     items: [],
     icon: <House />,
+  },
+  {
+    title: "Community",
+    url: "/community",
+    items: [],
+    icon: <Globe />,
   },
   {
     title: "Proposal",
@@ -120,6 +127,12 @@ const menuItems: MenuItem[] = [
     icon: <BookOpen />,
     items: [],
   },
+  {
+    title: "My Groups",
+    url: "/mentor/groups",
+    icon: <Users />,
+    items: [],
+  },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -128,6 +141,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const userRole = user?.data?.role;
 
   const filteredMenuItems = menuItems.filter((item) => {
+    if (userRole === "community") {
+      return item.title === "Community";
+    }
+
+    if (item.title === "Community") {
+      return false;
+    }
+
     const isAdminOnly = item.title === "Admin" || item.title === "Students" || item.title === "All Groups";
     
     if ((userRole === "student" || userRole === "teacher") && isAdminOnly) {
@@ -153,6 +174,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     }
 
     if (item.title === "Review Board" && userRole !== "teacher") {
+      return false;
+    }
+
+    if (item.title === "My Groups" && userRole !== "teacher") {
       return false;
     }
     return true;

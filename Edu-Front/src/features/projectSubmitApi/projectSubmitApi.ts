@@ -10,7 +10,7 @@ import { ProjectSubmissionResponse } from "@/type/project";
 export const projectSubmitApi = createApi({
   reducerPath: "projectSubmitApi",
   baseQuery,
-  tagTypes: ["ProjectSubmission"],
+  tagTypes: ["ProjectSubmission", "ChapterSubmission"],
   endpoints: (builder) => ({
     // Create new project submission
     submitProject: builder.mutation<ProjectSubmissionResponse, FormData>({
@@ -24,7 +24,7 @@ export const projectSubmitApi = createApi({
           formData: true,
         };
       },
-      invalidatesTags: [{ type: "ProjectSubmission", id: "LIST" }],
+      invalidatesTags: [{ type: "ProjectSubmission", id: "LIST" }, "ChapterSubmission"],
     }),
   }),
 });

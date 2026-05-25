@@ -19,7 +19,7 @@ export function Attachments({ attachments }: { attachments: FeedbackAttachment[]
                 <p className="text-xs text-gray-500">{attachment?.size}</p>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+            <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
               <Download className="h-4 w-4" />
             </Button>
           </div>

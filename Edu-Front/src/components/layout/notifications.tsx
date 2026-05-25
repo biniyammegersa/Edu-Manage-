@@ -21,7 +21,7 @@ const notifications = [
     message: "Check out our new budget tracking tool!",
     date: "2023-07-15",
     icon: Info,
-    color: "text-blue-500",
+    color: "text-emerald-500",
   },
   {
     id: 2,

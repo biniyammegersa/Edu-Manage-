@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Select,
   SelectContent,
@@ -10,60 +10,87 @@ import {
 import { Input } from "../ui/input";
 import { Calendar, Grid, List, Search } from "lucide-react";
 import { Button } from "../ui/button";
-import Link from "next/link";
 import SharedProjectCard from "./shared-project-card";
-import { useGetAllProjectsQuery } from "@/features/getProjectsApi/getProjectsApi";
+import {
+  useGetAdminProjectsQuery,
+  useGetAllProjectsQuery,
+  useGetMentorProjectsQuery,
+} from "@/features/getProjectsApi/getProjectsApi";
 import { useGetUserQuery } from "@/features/profileApi/profileApi";
 import { Project } from "@/type/project";
 import { profileType } from "@/type/profile";
 
 const SharedProject = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [statusFilter, setStatusFilter] = useState("all");
   const { data: userData } = useGetUserQuery();
-  const { data: projectsData, isLoading } = useGetAllProjectsQuery();
-  
   const user = userData?.data as profileType;
-  const allProjects = (projectsData?.projects as Project[]) || [];
-  
-  // Filter projects based on user role and ID
-  const filteredProjects = allProjects.filter(project => {
-    if (!user?._id) return false;
-    
-    // If user is a student, show their own projects or projects from their group
-    if (user.role === 'student') {
-      return (
-        (project.group && user.group && project.group === user.group) || 
-        project.teamMembers?.some(member => member.id === user._id)
+  const isAdmin = user?.role === "admin";
+  const isTeacher = user?.role === "teacher";
+
+  const { data: projectsData, isLoading: isLoadingPublic } = useGetAllProjectsQuery(undefined, {
+    skip: isAdmin || isTeacher,
+  });
+  const { data: adminProjectsData, isLoading: isLoadingAdmin } = useGetAdminProjectsQuery(undefined, {
+    skip: !isAdmin,
+  });
+  const { data: mentorProjectsData, isLoading: isLoadingMentor } = useGetMentorProjectsQuery(undefined, {
+    skip: !isTeacher,
+  });
+
+  const isLoading = isAdmin ? isLoadingAdmin : isTeacher ? isLoadingMentor : isLoadingPublic;
+  const allProjects = (
+    (isAdmin
+      ? adminProjectsData?.projects
+      : isTeacher
+        ? mentorProjectsData?.projects
+        : projectsData?.projects) as Project[]
+  ) || [];
+
+  const filteredProjects = useMemo(() => {
+    let list = allProjects.filter((project) => {
+      if (!user?._id) return false;
+
+      if (user.role === "student") {
+        return (
+          (project.group && user.group && project.group === user.group) ||
+          project.teamMembers?.some((member) => member.id === user._id)
+        );
+      }
+
+      if (user.role === "teacher") {
+        return true;
+      }
+
+      return true;
+    });
+
+    if ((isAdmin || isTeacher) && statusFilter !== "all") {
+      list = list.filter(
+        (p) => (p.status || "pending").toLowerCase() === statusFilter.toLowerCase()
       );
     }
-    
-    // If user is a teacher, show projects they're reviewing or teaching
-    if (user.role === 'teacher') {
-      return project.reviewedByTeacherId === user._id;
-    }
-    
-    // For other roles (like admin), show all projects
-    return true;
-  });
+
+    return list;
+  }, [allProjects, user, isAdmin, isTeacher, statusFilter]);
 
   return (
     <div>
       <div className="container mx-auto py-6 space-y-6">
         <div className="space-y-1">
           <h1 className="text-2xl font-bold tracking-tight">
-            {user?.role === 'student' 
-              ? 'My Projects' 
-              : user?.role === 'admin'
-                ? 'All Platform Projects'
-                : 'Assigned Projects'}
+            {user?.role === "student"
+              ? "My Projects"
+              : user?.role === "admin"
+                ? "All Platform Projects"
+                : "Assigned Projects"}
           </h1>
           <p className="text-muted-foreground">
-            {user?.role === 'student' 
-              ? 'Projects you are working on'
-              : user?.role === 'admin'
-                ? 'Overview of all projects across the platform'
-                : 'Projects assigned to you for review or teaching'
-            }
+            {user?.role === "student"
+              ? "Projects you are working on"
+              : user?.role === "admin"
+                ? "Review pending projects and publish approved ones for the community"
+                : "Projects assigned to you for review or teaching"}
           </p>
         </div>
 
@@ -77,17 +104,31 @@ const SharedProject = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </div>
           </div>
-          
-          <Select defaultValue="all">
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Projects</SelectItem>
-              <SelectItem value="teaching">Teaching</SelectItem>
-              <SelectItem value="reviewing">Reviewing</SelectItem>
-            </SelectContent>
-          </Select>
+
+          {isAdmin || isTeacher ? (
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="published">Published</SelectItem>
+              </SelectContent>
+            </Select>
+          ) : (
+            <Select defaultValue="all">
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Projects</SelectItem>
+                <SelectItem value="teaching">Teaching</SelectItem>
+                <SelectItem value="reviewing">Reviewing</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
 
           <div className="relative">
             <Input type="date" className="w-[180px] pl-10" />
@@ -130,17 +171,21 @@ const SharedProject = () => {
         ) : filteredProjects.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 dark:text-gray-400 text-lg">
-              {user?.role === 'student' 
-                ? 'You are not part of any projects yet.'
-                : 'No projects assigned to you yet.'
-              }
+              {user?.role === "student"
+                ? "You are not part of any projects yet."
+                : user?.role === "admin"
+                  ? "No projects match this filter."
+                  : "No projects assigned to you yet."}
             </p>
           </div>
         ) : (
-          <div className={viewMode === "grid" 
-            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-            : "space-y-4"
-          }>
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                : "space-y-4"
+            }
+          >
             {filteredProjects.map((project) => (
               <SharedProjectCard
                 key={project._id}
@@ -150,8 +195,8 @@ const SharedProject = () => {
                 imageUrl={project.coverImage || "/placeholder-project.jpg"}
                 date={project.createdAt}
                 viewMode={viewMode}
-                role={(user?.role || 'student') as 'student' | 'teacher' | 'admin'}
-                status={project.status}
+                role={(user?.role || "student") as "student" | "teacher" | "admin"}
+                projectStatus={project.status}
               />
             ))}
           </div>

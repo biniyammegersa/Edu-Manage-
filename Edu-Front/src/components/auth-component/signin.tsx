@@ -58,7 +58,7 @@ const Login = () => {
       toast.success("Login successful!");
       
       if (result.role === "community") {
-        router.push("/");
+        router.push("/community");
       } else {
         router.push("/home");
       }

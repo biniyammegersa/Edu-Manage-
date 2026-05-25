@@ -8,11 +8,12 @@ export default function ProjectGrid() {
   const { data } = useGetAllProjectsQuery();
 
   const projectsData = (data?.projects as Project[]) || [];
-  const approvedProjects = projectsData.filter(project => project?.status === true);
-  console.log("approvedProjects", approvedProjects);
+  const publishedProjects = projectsData.filter(
+    (project) => project?.status === "published"
+  );
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {approvedProjects?.map((project) => (
+      {publishedProjects?.map((project) => (
           <ProjectCard key={project?._id} project={project} />
       ))}
     </div>
