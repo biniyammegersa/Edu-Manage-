@@ -1,6 +1,7 @@
 import Project from '../models/Project.js';
 import User from '../models/user.model.js';
 import Group from '../models/Group.js';
+import { checkAllDocumentationChaptersApprovedForGroup } from '../services/documentationReadiness.js';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import mongoose from 'mongoose';
@@ -29,11 +30,92 @@ const uploadToCloudinary = async (file, options = {}) => {
   });
 };
 
-// Get all projects
+// Get all PUBLISHED projects (community feed)
 export const getProjects = async (req, res) => {
   try {
-    const projects = await Project.find();
+    const projects = await Project.find({ status: 'published' })
+      .populate('group', 'name')
+      .populate('reviewedByTeacherId', 'fullName')
+      .sort({ updatedAt: -1 });
     res.json({ projects });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get all projects for admin (pending, approved, published)
+export const getAdminProjects = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admin can access this resource.' });
+    }
+    const projects = await Project.find({})
+      .populate('group', 'name')
+      .populate('reviewedByTeacherId', 'fullName email')
+      .sort({ updatedAt: -1 });
+    res.json({ success: true, projects });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get all projects assigned to the logged-in mentor (pending, approved, published)
+export const getMentorProjects = async (req, res) => {
+  try {
+    if (req.user.role !== 'teacher') {
+      return res.status(403).json({ message: 'Only mentors can access this resource.' });
+    }
+    const mentorId = req.user._id;
+    const groups = await Group.find({ mentor: mentorId }).select('_id');
+    const groupIds = groups.map((g) => g._id);
+
+    const projects = await Project.find({
+      $or: [
+        { reviewedByTeacherId: mentorId },
+        { group: { $in: groupIds } },
+      ],
+    })
+      .populate('group', 'name')
+      .populate('reviewedByTeacherId', 'fullName email')
+      .sort({ updatedAt: -1 });
+
+    res.json({ success: true, projects });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get all APPROVED (but not yet published) projects — admin only
+export const getApprovedProjects = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admin can access this resource.' });
+    }
+    const projects = await Project.find({ status: 'approved' })
+      .populate('group', 'name')
+      .populate('reviewedByTeacherId', 'fullName email')
+      .sort({ updatedAt: -1 });
+    res.json({ success: true, projects });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Publish a project — admin only
+export const publishProject = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Only admin can publish projects.' });
+    }
+    const project = await Project.findByIdAndUpdate(
+      req.params.id,
+      { status: 'published' },
+      { new: true, runValidators: true }
+    );
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found.' });
+    }
+    res.json({ success: true, message: 'Project published successfully.', project });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -91,6 +173,23 @@ export const createProject = async (req, res) => {
     }
 
     const reviewedByTeacherId = group.mentor;
+
+    const documentationReadiness = await checkAllDocumentationChaptersApprovedForGroup(
+      student.group
+    );
+    if (!documentationReadiness.eligible) {
+      return res.status(400).json({
+        message: documentationReadiness.message,
+        documentationReadiness,
+      });
+    }
+
+    const existingProject = await Project.findOne({ group: student.group });
+    if (existingProject?.projectDescription) {
+      return res.status(400).json({
+        message: 'Your group already has a submitted project.',
+      });
+    }
 
     // Arrays to hold all Cloudinary upload promises
     const uploadPromises = [];
@@ -204,33 +303,32 @@ export const createProject = async (req, res) => {
       coverImage = result.secure_url;
     }
 
-    const project = new Project({
-      // Required fields
+    const projectPayload = {
       title,
       elevatorPitch,
-      
-      // Optional fields with defaults
       tags: parsedTags || [],
       coverImage,
       projectDescription,
-      
-      // Team and collaboration
       teamMembers: processedCollaborators,
-      
-      // Tools and machines
-      toolsAndMachines: noToolsUsed 
-        ? { noToolsUsed: true, tools: [] } 
+      toolsAndMachines: noToolsUsed
+        ? { noToolsUsed: true, tools: [] }
         : { noToolsUsed: false, tools: processedTools },
-      
-      // Apps and platforms
       appsAndPlatforms: processedApps,
       codeAndDocumentation: finalCodeAndDocumentation,
       noToolsUsed,
-      reviewedByTeacherId: reviewedByTeacherId,
-      group: student.group
-    });
+      reviewedByTeacherId,
+      group: student.group,
+      status: 'pending',
+    };
 
-    const savedProject = await project.save();
+    let savedProject;
+    if (existingProject) {
+      Object.assign(existingProject, projectPayload);
+      savedProject = await existingProject.save();
+    } else {
+      savedProject = await new Project(projectPayload).save();
+    }
+
     res.status(201).json({ project: savedProject });
   } catch (error) {
     console.error('Error creating project:', error);

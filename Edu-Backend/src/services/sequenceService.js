@@ -10,28 +10,17 @@ export const checkSubmissionEligibility = async (projectId, chapterNumber) => {
     subMap[s.chapterNumber] = s.currentStatus;
   });
 
-  if (chapterNumber === 2 || chapterNumber === 3) {
-    // Needs Chapter 1 submitted or approved
-    const ch1Status = subMap[1];
-    if (!ch1Status) {
-      return { 
-        eligible: false, 
-        message: "You must submit Chapter 1 (Introduction) before starting Chapter 2 or 3." 
-      };
-    }
-  }
+  const prerequisiteChapter = chapterNumber - 1;
+  const prereqStatus = subMap[prerequisiteChapter];
 
-  if (chapterNumber >= 4) {
-    // Chapter N requires Chapter N-1 to be Approved
-    const prerequisiteChapter = chapterNumber === 4 ? 3 : chapterNumber - 1; // Chapter 4 depends on Chapter 3
-    const prereqStatus = subMap[prerequisiteChapter];
-
-    if (!prereqStatus || prereqStatus !== 'Approved') {
-      return {
-        eligible: false,
-        message: `Prerequisite Incomplete: Chapter ${prerequisiteChapter} must be officially 'Approved' before you can submit Chapter ${chapterNumber}.`
-      };
-    }
+  if (!prereqStatus || prereqStatus !== 'Approved') {
+    const statusHint = prereqStatus
+      ? ` (current status: ${prereqStatus.replace(/_/g, ' ')})`
+      : '';
+    return {
+      eligible: false,
+      message: `Chapter ${prerequisiteChapter} must be officially Approved before you can submit Chapter ${chapterNumber}${statusHint}.`,
+    };
   }
 
   return { eligible: true };

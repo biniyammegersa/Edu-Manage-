@@ -1,5 +1,5 @@
 import express from 'express';
-import { createGroup, getMyGroup, getAllGroups, assignMentor } from '../controllers/groupController.js';
+import { createGroup, getMyGroup, getMentorGroups, getAllGroups, assignMentor } from '../controllers/groupController.js';
 import { sendMessage, getMessages } from '../controllers/groupChatController.js';
 import { protectRoute } from '../middleware/auth.middleware.js';
 
@@ -10,6 +10,7 @@ router.use(protectRoute);
 router.post('/', createGroup);
 router.post('/assign-mentor', assignMentor);
 router.get('/my-group', getMyGroup);
+router.get('/mentor/groups', getMentorGroups);
 router.get('/all', getAllGroups);
 
 // Group Chat

@@ -90,7 +90,7 @@ export const createProjectFeedback = async (req, res) => {
     const savedFeedback = await newFeedback.save();
 
     // Update project status based on feedback status
-    const projectStatus = status === 'approved' ? true : false;
+    const projectStatus = status === 'approved' ? 'approved' : 'pending';
     
     // Update the project with new status and reviewer
     const updatedProject = await Project.findByIdAndUpdate(
@@ -140,7 +140,7 @@ export const updateFeedbackStatus = async (req, res) => {
     const updatedFeedback = await feedback.save();
 
     // Update project status based on feedback status
-    const projectStatus = status === 'approved' ? true : false;
+    const projectStatus = status === 'approved' ? 'approved' : 'pending';
     await Project.findByIdAndUpdate(
       feedback.projectId,
       { 

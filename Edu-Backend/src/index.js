@@ -7,6 +7,7 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import projectRoutes from "./routes/projectRoutes.js";
+import publicProjectRoutes from "./routes/publicProjectRoutes.js";
 import authRoutes from "./routes/auth.route.js";
 import proposalRoutes from "./routes/proposalRoutes.js";
 import { connectDB } from "./lib/db.js";
@@ -35,6 +36,7 @@ app.get("/", (req, res) => {
 });
 
 // Routes
+app.use("/api/public/projects", publicProjectRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/proposals", proposalRoutes);

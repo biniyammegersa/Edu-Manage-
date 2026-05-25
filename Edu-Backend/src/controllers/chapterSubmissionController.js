@@ -6,6 +6,10 @@ import { validateTemplate } from '../services/validationEngine.js';
 import { performAcademicAIAnalysis } from '../services/aiAnalysisService.js';
 import { runPlagiarismCheck } from '../services/similarityService.js';
 import { checkSubmissionEligibility } from '../services/sequenceService.js';
+import {
+  checkAllDocumentationChaptersApprovedForGroup,
+  getOrCreateDraftProjectForGroup,
+} from '../services/documentationReadiness.js';
 
 // Submit or revise a chapter
 export const submitChapter = async (req, res) => {
@@ -30,11 +34,8 @@ export const submitChapter = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Student does not belong to any group.' });
     }
 
-    // 2. Resolve Project linked to Group
-    const project = await Project.findOne({ group: group._id });
-    if (!project) {
-      return res.status(400).json({ success: false, message: 'No project found registered for your student group.' });
-    }
+    // 2. Ensure draft project workspace exists for documentation tracking
+    const project = await getOrCreateDraftProjectForGroup(group);
 
     // 3. Enforce Sequencing Rules
     const eligibility = await checkSubmissionEligibility(project._id, parsedChapterNumber);
@@ -129,6 +130,35 @@ export const submitChapter = async (req, res) => {
   }
 };
 
+// Check if group may submit full project (all doc chapters approved)
+export const getDocumentationReadiness = async (req, res) => {
+  try {
+    const studentId = req.user._id;
+    const group = await Group.findOne({ members: studentId });
+
+    if (!group) {
+      return res.status(200).json({
+        success: true,
+        eligible: false,
+        approvedCount: 0,
+        total: 7,
+        pending: ['Join a group and complete documentation first'],
+        message: 'You must belong to a project group before submitting a project.',
+      });
+    }
+
+    const project = await Project.findOne({ group: group._id });
+    const readiness = await checkAllDocumentationChaptersApprovedForGroup(group._id);
+    return res.status(200).json({
+      success: true,
+      ...readiness,
+      hasSubmittedProject: !!(project && project.projectDescription),
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Retrieve student submissions (returns complete 1-7 chapter matrix)
 export const getMySubmissions = async (req, res) => {
   try {
@@ -166,6 +196,35 @@ export const getSubmissionDetails = async (req, res) => {
     }
 
     return res.status(200).json({ success: true, data: submission });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// All documentation submissions for advisor's groups (review history)
+export const getMentorDocumentationHistory = async (req, res) => {
+  try {
+    const advisorId = req.user._id;
+
+    const groups = await Group.find({ mentor: advisorId });
+    const groupIds = groups.map((g) => g._id);
+
+    if (groupIds.length === 0) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+
+    const submissions = await ChapterSubmission.find({
+      group: { $in: groupIds },
+      currentStatus: { $ne: 'Under_Review' },
+    })
+      .populate('group', 'name')
+      .populate('project', 'title')
+      .sort({ updatedAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: submissions,
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

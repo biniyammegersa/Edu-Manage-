@@ -114,6 +114,35 @@ export const getMyGroup = async (req, res) => {
   }
 };
 
+// Get groups assigned to the logged-in mentor
+export const getMentorGroups = async (req, res) => {
+  try {
+    if (req.user.role !== 'teacher') {
+      return res.status(403).json({ success: false, message: 'Only mentors can access this resource.' });
+    }
+
+    const groups = await Group.find({ mentor: req.user._id })
+      .populate('createdBy', 'fullName email')
+      .populate({
+        path: 'members',
+        select: 'fullName email department imageUrl role',
+      })
+      .populate('mentor', 'fullName email department imageUrl role')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: groups,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching mentor groups',
+      error: error.message,
+    });
+  }
+};
+
 // Get all groups
 export const getAllGroups = async (req, res) => {
   try {
@@ -183,6 +212,7 @@ export const assignMentor = async (req, res) => {
 export default {
   createGroup,
   getMyGroup,
+  getMentorGroups,
   getAllGroups,
-  assignMentor
+  assignMentor,
 };

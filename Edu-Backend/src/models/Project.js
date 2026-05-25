@@ -64,7 +64,7 @@ const projectSchema = new mongoose.Schema({
   comments: [commentSchema],
   // Additional fields for internal use
   views: { type: Number, default: 0 },
-  status: { type: Boolean, default: false },
+  status: { type: String, enum: ['pending', 'approved', 'published'], default: 'pending' },
   reviewedByTeacherId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   group: { type: mongoose.Schema.Types.ObjectId, ref: 'Group' }
