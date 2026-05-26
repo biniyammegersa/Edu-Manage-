@@ -1,0 +1,125 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 152 55% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14.3% 95.9%;
+    --secondary-foreground: 220.9 39.3% 11%;
+    --muted: 220 14.3% 95.9%;
+    --muted-foreground: 220 8.9% 46.1%;
+    --accent: 220 14.3% 95.9%;
+    --accent-foreground: 220.9 39.3% 11%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 152 55% 52%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+    --active-bg: 152 55% 52% / 0.2;
+    --blue: 152 55% 52%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 20% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 20% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 152 50% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 152 50% 58%;
+    --active-bg: 152 50% 58% / 0.2;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    
+    /* New dark mode specific variables */
+    --feedback-bg: 222.2 84% 6%;
+    --feedback-card: 222.2 84% 7%;
+    --feedback-border: 217.2 32.6% 20%;
+    --feedback-text: 210 20% 96%;
+    --feedback-text-muted: 215 20.2% 70%;
+    --feedback-star-filled: 43 96% 56%;
+    --feedback-star-empty: 217.2 32.6% 25%;
+    --feedback-badge-approved: 142 76% 36%;
+    --feedback-badge-pending: 48 96% 53%;
+    --feedback-badge-rejected: 0 84% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground transition-colors duration-200;
+  }
+}
+
+/* Dark mode specific component styles */
+@layer components {
+  .dark .feedback-card {
+    @apply bg-[hsl(var(--feedback-card))] border-[hsl(var(--feedback-border))];
+  }
+
+  .dark .feedback-text {
+    @apply text-[hsl(var(--feedback-text))];
+  }
+
+  .dark .feedback-text-muted {
+    @apply text-[hsl(var(--feedback-text-muted))];
+  }
+
+  .dark .feedback-star-filled {
+    @apply text-[hsl(var(--feedback-star-filled))] fill-[hsl(var(--feedback-star-filled))];
+  }
+
+  .dark .feedback-star-empty {
+    @apply text-[hsl(var(--feedback-star-empty))] fill-[hsl(var(--feedback-star-empty))];
+  }
+
+  .dark .feedback-badge-approved {
+    @apply bg-[hsl(var(--feedback-badge-approved)/0.2)] text-[hsl(var(--feedback-badge-approved))];
+  }
+
+  .dark .feedback-badge-pending {
+    @apply bg-[hsl(var(--feedback-badge-pending)/0.2)] text-[hsl(var(--feedback-badge-pending))];
+  }
+
+  .dark .feedback-badge-rejected {
+    @apply bg-[hsl(var(--feedback-badge-rejected)/0.2)] text-[hsl(var(--feedback-badge-rejected))];
+  }
+}
